@@ -328,14 +328,14 @@ html:not(.js) .intro { display: none; }
   visibility: hidden;
   pointer-events: none;
   /* crossfade w CSS — niewrażliwy na przerwane tweeny JS */
-  transition: opacity 0.45s ease, visibility 0s linear 0.45s;
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
 }
 
 .slider__slide.is-active {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transition: opacity 0.55s ease 0.15s, visibility 0s;
+  transition: opacity 0.65s ease 0.28s, visibility 0s;
 }
 
 .slider__heading {

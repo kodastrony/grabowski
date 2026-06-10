@@ -557,14 +557,15 @@ function initHomeSlider(root) {
 
   const activeIdx = () => ((target % len) + len) % len;
 
-  function applyText() {
+  function applyText(fresh) {
     const idx = activeIdx();
     slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
     const copy = slides[idx].querySelectorAll('.slider__heading, .slider__desc');
     gsap.killTweensOf(copy);
     if (!prefersReduced) {
-      gsap.fromTo(copy, { y: 26 }, {
-        y: 0, duration: 0.85, stagger: 0.09, ease: 'expo.out', delay: 0.15, clearProps: 'transform',
+      gsap.fromTo(copy, { y: 30 }, {
+        y: 0, duration: 1.0, stagger: 0.1, ease: 'expo.out',
+        delay: fresh ? 0.38 : 0.14, clearProps: 'transform',
       });
     }
     rollCounterTo(countEl, pad2(idx));
@@ -572,8 +573,11 @@ function initHomeSlider(root) {
 
   function go(step) {
     if (len < 2) return;
+    // świeże przejście (taśma stoi) dostaje pełną choreografię inOut;
+    // klik w trakcie jazdy kontynuuje pęd bez zwalniania (power3.out)
+    const wasMoving = Boolean(moveTween && moveTween.isActive());
     target += step;
-    applyText();
+    applyText(!wasMoving);
     if (progress) progress.pause(0);
 
     if (prefersReduced) {
@@ -587,8 +591,8 @@ function initHomeSlider(root) {
     if (moveTween) moveTween.kill();
     moveTween = gsap.to(pos, {
       p: target,
-      duration: Math.min(0.95 + 0.3 * distance, 2.0),
-      ease: 'power3.out',
+      duration: wasMoving ? Math.min(0.95 + 0.35 * distance, 2.1) : 1.5,
+      ease: wasMoving ? 'power3.out' : 'power3.inOut',
       onUpdate: render,
       onComplete: () => {
         moveTween = null;
@@ -599,6 +603,15 @@ function initHomeSlider(root) {
         render();
       },
     });
+
+    // oddech skali wjeżdżającego zdjęcia — wybrzmiewa dłużej niż
+    // sama jazda taśmy, już po zatrzymaniu (warstwowy timing)
+    if (!wasMoving) {
+      const img = imgs[activeIdx()];
+      gsap.killTweensOf(img, 'scale');
+      gsap.fromTo(img, { scale: 1.07 }, { scale: 1, duration: 2.2, ease: 'expo.out' });
+    }
+
     syncProgress();
   }
 
