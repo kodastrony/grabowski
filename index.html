@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grabowski — Pracownia Stolarska | Kuchnie, zabudowy i meble na wymiar</title>
+  <meta name="description" content="Pracownia stolarska Grabowski. Projektujemy i wykonujemy kuchnie, zabudowy oraz meble z litego drewna — na wymiar, na pokolenia.">
+  <meta property="og:title" content="Grabowski — Pracownia Stolarska">
+  <meta property="og:description" content="Kuchnie, zabudowy i meble z litego drewna. Z natury, na wymiar.">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1622372738946-62e02505feb3?w=1200&q=70&auto=format&fit=crop">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23DDDAD5'/%3E%3Cg fill='%231E1E1E'%3E%3Cpath d='M14 10h7v44h-7z'/%3E%3Cpath d='M21 10h17v7H21zM21 25h17v7H21zM21 40h17v7H21z'/%3E%3Cpath d='M43 10h7v44h-7z'/%3E%3Cpath d='M27 17h16v8H27zM27 32h16v8H27zM27 47h16v7H27z' fill='none'/%3E%3Cpath d='M26 17h17v8H26z' opacity='0'/%3E%3Cpath d='M43 17H27v8h16zM43 32H27v8h16z' opacity='0'/%3E%3C/g%3E%3C/svg%3E">
+  <meta name="theme-color" content="#DDDAD5">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== INTRO ===== -->
+  <div class="intro" data-intro aria-hidden="true">
+    <div class="intro__center">
+      <svg class="intro__mark" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g data-mark-left fill="currentColor">
+          <rect x="12" y="8"  width="8"  height="48"/>
+          <rect x="20" y="8"  width="18" height="9"/>
+          <rect x="20" y="26" width="18" height="9"/>
+          <rect x="20" y="44" width="18" height="9"/>
+        </g>
+        <g data-mark-right fill="currentColor">
+          <rect x="44" y="8"  width="8"  height="48"/>
+          <rect x="28" y="17" width="16" height="9"/>
+          <rect x="28" y="35" width="16" height="9"/>
+        </g>
+      </svg>
+      <div class="intro__word">Grabowski</div>
+      <div class="intro__sub">Pracownia stolarska</div>
+    </div>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header" data-header>
+    <div class="header__inner container">
+      <a class="brand" href="#/">
+        <svg class="brand__mark" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g fill="currentColor">
+            <rect x="12" y="8"  width="8"  height="48"/>
+            <rect x="20" y="8"  width="18" height="9"/>
+            <rect x="20" y="26" width="18" height="9"/>
+            <rect x="20" y="44" width="18" height="9"/>
+            <rect x="44" y="8"  width="8"  height="48"/>
+            <rect x="28" y="17" width="16" height="9"/>
+            <rect x="28" y="35" width="16" height="9"/>
+          </g>
+        </svg>
+        <span class="brand__name">Grabowski</span>
+      </a>
+
+      <div class="header__label" aria-hidden="true">
+        <span class="header__label-roll" data-page-label>Strona główna</span>
+      </div>
+
+      <div class="header__right">
+        <button class="header__back" type="button" data-back hidden>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 12H4M10 5l-7 7 7 7" stroke="currentColor" stroke-width="1.4"/></svg>
+          <span data-roll>Wstecz</span>
+        </button>
+        <button class="header__menu-btn" type="button" data-menu-toggle aria-expanded="false" aria-controls="menu">
+          <span class="menu-btn-roll">
+            <span class="menu-btn-roll__item">Menu</span>
+            <span class="menu-btn-roll__item" aria-hidden="true">Zamknij</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== KURTYNA PRZEJŚĆ ===== -->
+  <div class="veil" data-veil aria-hidden="true"></div>
+
+  <!-- ===== MENU OVERLAY ===== -->
+  <nav class="menu" id="menu" data-menu aria-label="Menu główne">
+    <div class="container">
+      <div class="menu__grid">
+        <div class="menu__col">
+          <div class="menu__head">
+            <span class="menu__title">Oferta</span>
+            <span class="menu__sub">Design na każdy dzień</span>
+          </div>
+          <ul class="menu__list">
+            <li><a href="#/oferta/kuchnie" data-roll>Kuchnie</a></li>
+            <li><a href="#/oferta/zabudowy" data-roll>Zabudowy na wymiar</a></li>
+            <li><a href="#/oferta/meble" data-roll>Meble autorskie</a></li>
+            <li><a href="#realizacje" data-scroll-to data-roll>Realizacje</a></li>
+          </ul>
+        </div>
+        <div class="menu__col">
+          <div class="menu__head">
+            <span class="menu__title">Filozofia</span>
+            <span class="menu__sub">W zgodzie z materiałem</span>
+          </div>
+          <ul class="menu__list">
+            <li><a href="#/filozofia" data-roll>Filozofia pracowni</a></li>
+            <li><a href="#proces" data-scroll-to data-roll>Nasz proces</a></li>
+            <li><a href="#serwis" data-scroll-to data-roll>Serwis i opieka</a></li>
+          </ul>
+        </div>
+        <div class="menu__col">
+          <div class="menu__head">
+            <span class="menu__title">Pracownia</span>
+            <span class="menu__sub">Ludzie i miejsce</span>
+          </div>
+          <ul class="menu__list">
+            <li><a href="#/pracownia" data-roll>O nas</a></li>
+            <li><a href="#aktualnosci" data-scroll-to data-roll>Aktualności</a></li>
+            <li><a href="#/kontakt" data-roll>Kontakt i wizyta</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div class="menu-backdrop" data-menu-backdrop></div>
+
+  <!-- ===== CUSTOM CURSOR (slider) ===== -->
+  <div class="cursor" data-cursor aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+  </div>
+
+  <!-- ===== PAGE ===== -->
+  <div id="smooth-wrapper">
+    <div id="smooth-content">
+
+      <main id="top">
+
+        <!-- ============ WIDOK: STRONA GŁÓWNA ============ -->
+        <div class="view" data-view="home">
+
+        <!-- HERO -->
+        <section class="hero container" data-label="Strona główna">
+          <h1 class="hero__title" data-hero-title>Z&nbsp;natury,<br>na wymiar</h1>
+        </section>
+
+        <!-- SLIDER -->
+        <section class="slider container" data-slider aria-label="Wyróżnione tematy">
+          <div class="slider__panel">
+            <a class="slider__slide is-active" href="#/oferta/kuchnie">
+              <h2 class="slider__heading">Kuchnie, które łączą rzemiosło z&nbsp;codziennością.</h2>
+            </a>
+            <a class="slider__slide" href="#material" data-scroll-to>
+              <h2 class="slider__heading">Lite drewno pracuje z&nbsp;nami od czterech pokoleń.</h2>
+            </a>
+            <a class="slider__slide" href="#/oferta/zabudowy">
+              <h2 class="slider__heading">Zabudowy projektowane pod rytm Twojego wnętrza.</h2>
+            </a>
+            <div class="slider__progress"><span data-slider-progress></span></div>
+          </div>
+
+          <div class="slider__stage" data-cursor-zone>
+            <figure class="slider__media is-active">
+              <img src="https://images.unsplash.com/photo-1622372738946-62e02505feb3?w=1400&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1622372738946-62e02505feb3?w=700&q=70&auto=format&fit=crop 700w, https://images.unsplash.com/photo-1622372738946-62e02505feb3?w=1100&q=70&auto=format&fit=crop 1100w, https://images.unsplash.com/photo-1622372738946-62e02505feb3?w=1600&q=70&auto=format&fit=crop 1600w" sizes="(max-width: 900px) 100vw, 62vw" alt="Ciemna kuchnia z frezowanymi frontami i drewnianą zabudową" fetchpriority="high" data-speed="auto">
+            </figure>
+            <figure class="slider__media">
+              <img src="https://images.unsplash.com/photo-1551120738-c3fcea8d0cf8?w=1400&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1551120738-c3fcea8d0cf8?w=700&q=70&auto=format&fit=crop 700w, https://images.unsplash.com/photo-1551120738-c3fcea8d0cf8?w=1100&q=70&auto=format&fit=crop 1100w, https://images.unsplash.com/photo-1551120738-c3fcea8d0cf8?w=1600&q=70&auto=format&fit=crop 1600w" sizes="(max-width: 900px) 100vw, 62vw" alt="Iglasty las we mgle — źródło naszego materiału" loading="lazy" decoding="async" data-speed="auto">
+            </figure>
+            <figure class="slider__media">
+              <img src="https://images.unsplash.com/photo-1779648596383-fc041f8bd4da?w=1400&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1779648596383-fc041f8bd4da?w=700&q=70&auto=format&fit=crop 700w, https://images.unsplash.com/photo-1779648596383-fc041f8bd4da?w=1100&q=70&auto=format&fit=crop 1100w, https://images.unsplash.com/photo-1779648596383-fc041f8bd4da?w=1600&q=70&auto=format&fit=crop 1600w" sizes="(max-width: 900px) 100vw, 62vw" alt="Zabudowa garderobiana z ryflowanego orzecha" loading="lazy" decoding="async" data-speed="auto">
+            </figure>
+
+            <button class="slider__next" type="button" data-slider-next aria-label="Następny slajd">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.4"/>
+              </svg>
+            </button>
+            <div class="slider__count"><span class="slider__count-roll"><span data-slider-count>01</span></span>&nbsp;—&nbsp;03</div>
+          </div>
+        </section>
+
+        <!-- STATEMENT -->
+        <section class="statement container" id="pracownia" data-label="Pracownia">
+          <p class="statement__text" data-lines>Z potrzeby piękna w naszej pracowni w Milanówku powstają meble, które mają służyć dłużej niż jedno pokolenie. Projektujemy z umiarem, wykonujemy bez pośpiechu — tak, aby drewno mogło zestarzeć się z godnością.</p>
+        </section>
+
+        <!-- AKTUALNOŚCI -->
+        <section class="news container" id="aktualnosci" data-label="Aktualności">
+          <div class="row-split">
+            <div class="row-split__label" data-reveal>Aktualności</div>
+            <div class="row-split__content">
+              <ul class="news__list">
+                <li class="news__item" data-news-item>
+                  <a class="news__link" href="#wizyta" data-scroll-to data-roll>Dni otwarte pracowni — 19 września</a>
+                </li>
+                <li class="news__item" data-news-item>
+                  <a class="news__link" href="#kontakt" data-scroll-to data-roll>Szukamy: stolarz meblowy / monter zabudów</a>
+                </li>
+                <li class="news__item" data-news-item>
+                  <a class="news__link" href="#/projekt/dom-pod-lasem" data-roll>Realizacja roku: kuchnia w Domu pod Lasem</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- OFERTA -->
+        <section class="offer container" id="oferta" data-label="Oferta">
+          <div class="offer__label" data-reveal>Oferta</div>
+          <div class="offer__grid">
+            <a class="teaser" href="#/oferta/kuchnie">
+              <figure class="teaser__media" data-imgrev>
+                <img src="https://images.unsplash.com/photo-1729837149090-764b4272c2d7?w=900&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1729837149090-764b4272c2d7?w=500&q=70&auto=format&fit=crop 500w, https://images.unsplash.com/photo-1729837149090-764b4272c2d7?w=900&q=70&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1729837149090-764b4272c2d7?w=1300&q=70&auto=format&fit=crop 1300w" sizes="(max-width: 900px) 100vw, 31vw" alt="Jasna kuchnia z drewnianym sufitem i frontami z jesionu" loading="lazy" decoding="async" data-speed="auto">
+              </figure>
+              <h3 class="teaser__title"><span data-roll>Kuchnie</span><span class="teaser__arrow" aria-hidden="true">→</span></h3>
+            </a>
+            <a class="teaser" href="#/oferta/zabudowy">
+              <figure class="teaser__media" data-imgrev>
+                <img src="https://images.unsplash.com/photo-1760072513393-b9d81f65dd7e?w=900&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1760072513393-b9d81f65dd7e?w=500&q=70&auto=format&fit=crop 500w, https://images.unsplash.com/photo-1760072513393-b9d81f65dd7e?w=900&q=70&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1760072513393-b9d81f65dd7e?w=1300&q=70&auto=format&fit=crop 1300w" sizes="(max-width: 900px) 100vw, 31vw" alt="Zabudowa garderobiana na całą ścianę sypialni" loading="lazy" decoding="async" data-speed="auto">
+              </figure>
+              <h3 class="teaser__title"><span data-roll>Zabudowy</span><span class="teaser__arrow" aria-hidden="true">→</span></h3>
+            </a>
+            <a class="teaser" href="#/oferta/meble">
+              <figure class="teaser__media" data-imgrev>
+                <img src="https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=900&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=500&q=70&auto=format&fit=crop 500w, https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=900&q=70&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=1300&q=70&auto=format&fit=crop 1300w" sizes="(max-width: 900px) 100vw, 31vw" alt="Autorski system półek z dębu i bieli" loading="lazy" decoding="async" data-speed="auto">
+              </figure>
+              <h3 class="teaser__title"><span data-roll>Meble</span><span class="teaser__arrow" aria-hidden="true">→</span></h3>
+            </a>
+          </div>
+        </section>
+
+        <!-- PROCES -->
+        <section class="process container" id="proces" data-label="Proces">
+          <div class="row-split">
+            <div class="row-split__label" data-reveal>Jak pracujemy</div>
+            <div class="row-split__content">
+              <ol class="process__list">
+                <li class="process__row" data-process-row>
+                  <span class="process__num">01</span>
+                  <h3 class="process__name">Rozmowa i pomiar</h3>
+                  <p class="process__desc">Zaczynamy u Ciebie. Słuchamy, mierzymy, oglądamy światło — dobry projekt rodzi się z miejsca, nie z katalogu.</p>
+                </li>
+                <li class="process__row" data-process-row>
+                  <span class="process__num">02</span>
+                  <h3 class="process__name">Projekt</h3>
+                  <p class="process__desc">Rysujemy zabudowę w skali, dobieramy gatunek drewna i okucia. Zatwierdzasz każdy detal, zanim ruszą maszyny.</p>
+                </li>
+                <li class="process__row" data-process-row>
+                  <span class="process__num">03</span>
+                  <h3 class="process__name">Wykonanie</h3>
+                  <p class="process__desc">Frezujemy, klejimy i szlifujemy we własnym warsztacie. Tradycyjne złącza tam, gdzie mają sens — CNC tam, gdzie daje precyzję.</p>
+                </li>
+                <li class="process__row" data-process-row>
+                  <span class="process__num">04</span>
+                  <h3 class="process__name">Montaż</h3>
+                  <p class="process__desc">Przywozimy gotowe elementy i składamy całość w jeden, najwyżej dwa dni. Zostawiamy po sobie porządek i instrukcję pielęgnacji.</p>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- MATERIAŁ -->
+        <section class="material container" id="material" data-label="Materiał">
+          <div class="row-split">
+            <div class="row-split__label" data-reveal>Materiał</div>
+            <div class="row-split__content">
+              <p class="statement__text statement__text--sm" data-lines>Pracujemy na litym dębie, jesionie i orzechu z certyfikowanych tartaków. Sezonujemy drewno we własnej suszarni i wykańczamy je olejami — bez folii, bez kompromisów.</p>
+              <figure class="material__figure" data-imgrev>
+                <img src="https://images.unsplash.com/photo-1515446134809-993c501ca304?w=900&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1515446134809-993c501ca304?w=600&q=70&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1515446134809-993c501ca304?w=900&q=70&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1515446134809-993c501ca304?w=1300&q=70&auto=format&fit=crop 1300w" sizes="(max-width: 900px) 92vw, 40vw" alt="Przekrój pnia dębu — słoje przyrostu rocznego" loading="lazy" decoding="async" data-speed="auto">
+                <figcaption>Dąb, przekrój poprzeczny — każdy słój to jeden rok cierpliwości.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- REALIZACJE -->
+        <section class="works container" id="realizacje" data-label="Realizacje">
+          <div class="works__head">
+            <div class="works__label" data-reveal>Wybrane realizacje</div>
+          </div>
+          <div class="works__grid">
+            <a class="work" href="#/projekt/apartament-mokotow">
+              <figure class="work__media work__media--wide" data-imgrev>
+                <img src="https://images.unsplash.com/photo-1771270731051-9cfbb7222946?w=1100&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1771270731051-9cfbb7222946?w=600&q=70&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1771270731051-9cfbb7222946?w=1100&q=70&auto=format&fit=crop 1100w, https://images.unsplash.com/photo-1771270731051-9cfbb7222946?w=1500&q=70&auto=format&fit=crop 1500w" sizes="(max-width: 900px) 100vw, 55vw" alt="Kuchnia w orzechu amerykańskim z czarnym kamieniem" loading="lazy" decoding="async" data-speed="auto">
+              </figure>
+              <div class="work__meta">
+                <h3 class="work__title" data-roll>Apartament Mokotów — kuchnia w orzechu</h3>
+                <span class="work__place">Warszawa, 2025</span>
+              </div>
+            </a>
+            <a class="work" href="#/projekt/dom-pod-lasem">
+              <figure class="work__media work__media--tall" data-imgrev>
+                <img src="https://images.unsplash.com/photo-1774437290626-34d18c49598a?w=900&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1774437290626-34d18c49598a?w=500&q=70&auto=format&fit=crop 500w, https://images.unsplash.com/photo-1774437290626-34d18c49598a?w=900&q=70&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1774437290626-34d18c49598a?w=1300&q=70&auto=format&fit=crop 1300w" sizes="(max-width: 900px) 100vw, 38vw" alt="Zabudowa kuchenna z ciemnego dębu z drewnianym gniazdem" loading="lazy" decoding="async" data-speed="auto">
+              </figure>
+              <div class="work__meta">
+                <h3 class="work__title" data-roll>Dom pod Lasem — zabudowa dębowa</h3>
+                <span class="work__place">Konstancin, 2024</span>
+              </div>
+            </a>
+            <a class="work" href="#/projekt/mieszkanie-na-woli">
+              <figure class="work__media work__media--wide" data-imgrev>
+                <img src="https://images.unsplash.com/photo-1593069431672-f903a33c286f?w=1100&q=70&auto=format&fit=crop" srcset="https://images.unsplash.com/photo-1593069431672-f903a33c286f?w=600&q=70&auto=format&fit=crop 600w, https://images.unsplash.com/photo-1593069431672-f903a33c286f?w=1100&q=70&auto=format&fit=crop 1100w, https://images.unsplash.com/photo-1593069431672-f903a33c286f?w=1500&q=70&auto=format&fit=crop 1500w" sizes="(max-width: 900px) 100vw, 55vw" alt="Regały z orzecha i bieli w mieszkaniu na Woli" loading="lazy" decoding="async" data-speed="auto">
+              </figure>
+              <div class="work__meta">
+                <h3 class="work__title" data-roll>Mieszkanie na Woli — system regałowy</h3>
+                <span class="work__place">Warszawa, 2023</span>
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <!-- QUOTE -->
+        <section class="quote container">
+          <blockquote class="quote__block">
+            <p class="statement__text" data-lines>Rzemiosło uczy nas cierpliwości, technologia dodaje precyzji. W naszej pracowni jedno i drugie pracuje przy tym samym stole.</p>
+            <cite class="quote__cite" data-reveal>— Jan Grabowski, założyciel</cite>
+          </blockquote>
+        </section>
+
+        <!-- KARTY -->
+        <section class="cards container" id="serwis">
+          <div class="cards__grid">
+            <div class="card" data-reveal>
+              <span class="card__label">Opieka po montażu</span>
+              <h3 class="card__title">Jesteśmy blisko, także po latach</h3>
+              <p class="card__text">Drewno żyje — dlatego regulujemy fronty, odświeżamy olejowanie i naprawiamy ślady codzienności. Dobry serwis to część naszego rzemiosła.</p>
+              <a class="card__link" href="#kontakt" data-scroll-to data-roll>Zakres serwisu&nbsp;→</a>
+            </div>
+            <div class="card" id="wizyta" data-reveal>
+              <span class="card__label">Spotkanie w pracowni</span>
+              <h3 class="card__title">Zobacz, jak powstają nasze meble</h3>
+              <p class="card__text">Umów wizytę w Milanówku — przy desce kreślarskiej i zapachu świeżych wiórów porozmawiamy o Twoim wnętrzu, materiałach i terminach.</p>
+              <div class="card__actions">
+                <a class="btn" href="#/kontakt">Umów wizytę <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.6"/></svg></a>
+                <a class="card__link" href="#/kontakt" data-roll>Dojazd i kontakt&nbsp;→</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        </div><!-- /widok home -->
+
+        <!-- ============ WIDOK: PODSTRONY (renderowane przez JS) ============ -->
+        <div class="view" data-view="page" hidden></div>
+
+        <!-- FOOTER (wspólny) -->
+        <footer class="footer container" id="kontakt" data-label="Kontakt">
+          <div class="footer__rule"></div>
+          <div class="footer__top">
+            <span class="footer__name">Grabowski — Pracownia Stolarska</span>
+            <button class="footer__up" type="button" data-to-top>
+              <span data-roll>Do góry</span>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21V4M5 10l7-7 7 7" stroke="currentColor" stroke-width="1.4"/></svg>
+            </button>
+          </div>
+          <div class="footer__cols">
+            <address class="footer__address">
+              ul. Dębowa 12<br>
+              05-822 Milanówek<br><br>
+              <a href="tel:+48227584012" class="footer__contact-link">T 22 758 40 12</a><br>
+              <a href="mailto:pracownia@grabowski.studio" class="footer__contact-link">pracownia@grabowski.studio</a>
+            </address>
+            <ul class="footer__social">
+              <li><a href="#" data-roll>Instagram</a></li>
+              <li><a href="#" data-roll>Facebook</a></li>
+              <li><a href="#" data-roll>Pinterest</a></li>
+            </ul>
+            <ul class="footer__legal">
+              <li><a href="#" data-roll>Polityka prywatności</a></li>
+              <li><a href="#" data-roll>Regulamin</a></li>
+            </ul>
+          </div>
+          <div class="footer__bottom">
+            <span>© 2026 Pracownia Grabowski</span>
+            <span>Projekt i realizacja: KODA</span>
+          </div>
+        </footer>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollSmoother.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
