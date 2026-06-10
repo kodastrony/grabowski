@@ -1,5 +1,8 @@
 # GRABOWSKI — Pracownia Stolarska
 
+**Live: https://kodastrony.github.io/grabowski/**
+Repo: https://github.com/kodastrony/grabowski
+
 Strona portfolio (demo) dla fikcyjnej marki stolarskiej, wykonana przez **KODA**.
 
 Inspiracja klimatem: szwajcarskie strony rzemieślnicze (czysty layout, dużo
