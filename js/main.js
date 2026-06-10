@@ -108,10 +108,11 @@ const OFFERS = {
     detailLabel: 'Zakres',
     detail: 'Projekt w skali 1:1, dobór gatunku i wykończenia, integracja AGD, montaż w dwa dni i opieka serwisowa na lata.',
     slides: [
-      { id: 'photo-1622372738946-62e02505feb3', alt: 'Ciemna kuchnia z ryflowanymi frontami i mosiężnymi detalami' },
-      { id: 'photo-1729837149090-764b4272c2d7', alt: 'Jasna kuchnia z drewnianym sufitem z litych lameli' },
-      { id: 'photo-1771270731051-9cfbb7222946', alt: 'Wnęka kuchenna w orzechu amerykańskim' },
-      { id: 'photo-1774437290626-34d18c49598a', alt: 'Detal ciemnej zabudowy kuchennej' },
+      { id: 'photo-1622372738946-62e02505feb3', ar: '1.05', alt: 'Ciemna kuchnia z ryflowanymi frontami i mosiężnymi detalami' },
+      { id: 'photo-1729837149090-764b4272c2d7', ar: '1.45', alt: 'Jasna kuchnia z drewnianym sufitem z litych lameli' },
+      { id: 'photo-1771270731051-9cfbb7222946', ar: '0.74', alt: 'Wnęka kuchenna w orzechu amerykańskim' },
+      { id: 'photo-1774437290626-34d18c49598a', ar: '0.8', alt: 'Detal ciemnej zabudowy kuchennej' },
+      { id: 'photo-1772442363851-738a548f6c5c', ar: '1.5', alt: 'Jadalnia przy kuchni w popołudniowym świetle' },
     ],
     projects: ['apartament-mokotow', 'dom-pod-lasem'],
   },
@@ -122,10 +123,10 @@ const OFFERS = {
     detailLabel: 'Zakres',
     detail: 'Garderoby i szafy wnękowe, ściany RTV, biblioteki, zabudowy skosów, drzwi przesuwne i ukryte.',
     slides: [
-      { id: 'photo-1760072513393-b9d81f65dd7e', alt: 'Zabudowa garderobiana na całą ścianę sypialni' },
-      { id: 'photo-1779648596383-fc041f8bd4da', alt: 'Garderoba z ryflowanego orzecha z toaletką' },
-      { id: 'photo-1593069431672-f903a33c286f', alt: 'Zabudowa z orzecha i bieli z wnęką na biurko' },
-      { id: 'photo-1779277301060-ca36c5afead5', alt: 'Sypialnia z zabudową z ciemnego drewna' },
+      { id: 'photo-1760072513393-b9d81f65dd7e', ar: '1.35', alt: 'Zabudowa garderobiana na całą ścianę sypialni' },
+      { id: 'photo-1779648596383-fc041f8bd4da', ar: '0.8', alt: 'Garderoba z ryflowanego orzecha z toaletką' },
+      { id: 'photo-1593069431672-f903a33c286f', ar: '1.3', alt: 'Zabudowa z orzecha i bieli z wnęką na biurko' },
+      { id: 'photo-1779277301060-ca36c5afead5', ar: '1.5', alt: 'Sypialnia z zabudową z ciemnego drewna' },
     ],
     projects: ['apartament-mokotow', 'mieszkanie-na-woli'],
   },
@@ -136,11 +137,11 @@ const OFFERS = {
     detailLabel: 'Zakres',
     detail: 'Stoły i ławy, regały modułowe, komody, biurka oraz pojedyncze projekty autorskie na zamówienie.',
     slides: [
-      { id: 'photo-1772442363851-738a548f6c5c', alt: 'Stół i krzesła w ciepłym popołudniowym świetle' },
-      { id: 'photo-1605635544350-5796fb1622d1', alt: 'Stół jadalniany z litych desek' },
-      { id: 'photo-1720391793902-06a80038b1ed', alt: 'Narożnik dębowego stołu — detal połączenia' },
-      { id: 'photo-1594026112284-02bb6f3352fe', alt: 'System półek z dębu i bieli' },
-      { id: 'photo-1463082459669-fd1ca1692fea', alt: 'Szlifowanie blatu w pracowni' },
+      { id: 'photo-1772442363851-738a548f6c5c', ar: '1.5', alt: 'Stół i krzesła w ciepłym popołudniowym świetle' },
+      { id: 'photo-1605635544350-5796fb1622d1', ar: '1.5', alt: 'Stół jadalniany z litych desek' },
+      { id: 'photo-1720391793902-06a80038b1ed', ar: '0.67', alt: 'Narożnik dębowego stołu — detal połączenia' },
+      { id: 'photo-1594026112284-02bb6f3352fe', ar: '1.45', alt: 'System półek z dębu i bieli' },
+      { id: 'photo-1463082459669-fd1ca1692fea', ar: '1.5', alt: 'Szlifowanie blatu w pracowni' },
     ],
     projects: ['mieszkanie-na-woli', 'dom-pod-lasem'],
   },
@@ -517,11 +518,15 @@ function slideTransition(outMedia, inMedia, onDone) {
       if (onDone) onDone();
     },
   });
-  // nasunięcie z prawej + kontrprzesunięcie obrazka = efekt okna,
-  // wychodzące zdjęcie lekko odpływa w lewo pod spodem
-  tl.fromTo(inMedia, { xPercent: 100 }, { xPercent: 0, duration: 1.15, ease: 'power3.inOut' }, 0)
-    .fromTo(inImg, { xPercent: -44, scale: 1.06 }, { xPercent: 0, scale: 1, duration: 1.15, ease: 'power3.inOut' }, 0)
-    .to(outImg, { xPercent: -16, duration: 1.15, ease: 'power3.inOut' }, 0);
+  // klasyczne przepchnięcie: stare zdjęcie AKTYWNIE wyjeżdża w lewo,
+  // nowe wjeżdża z prawej tym samym ruchem; obrazki w środku dostają
+  // kontrprzesunięcie (parallax okna) — jeden wspólny easing
+  const D = 1.05;
+  const EASE = 'power3.inOut';
+  tl.fromTo(inMedia, { xPercent: 100 }, { xPercent: 0, duration: D, ease: EASE }, 0)
+    .fromTo(inImg, { xPercent: -32, scale: 1.05 }, { xPercent: 0, scale: 1, duration: D, ease: EASE }, 0)
+    .to(outMedia, { xPercent: -100, duration: D, ease: EASE }, 0)
+    .to(outImg, { xPercent: 32, duration: D, ease: EASE }, 0);
   return tl;
 }
 
@@ -580,11 +585,13 @@ function initHomeSlider(root) {
     inSlide.classList.add('is-active');
 
     // tekst: crossfade robi CSS po klasie; JS dokłada tylko delikatny
-    // wjazd nagłówka — zawsze z killem poprzedniego tweena
-    const heading = inSlide.querySelector('.slider__heading');
-    gsap.killTweensOf(heading);
+    // wjazd nagłówka i opisu — zawsze z killem poprzednich tweenów
+    const copy = inSlide.querySelectorAll('.slider__heading, .slider__desc');
+    gsap.killTweensOf(copy);
     if (!prefersReduced) {
-      gsap.fromTo(heading, { y: 26 }, { y: 0, duration: 0.85, ease: 'expo.out', delay: 0.15, clearProps: 'transform' });
+      gsap.fromTo(copy, { y: 26 }, {
+        y: 0, duration: 0.85, stagger: 0.09, ease: 'expo.out', delay: 0.15, clearProps: 'transform',
+      });
     }
 
     activeTl = slideTransition(medias[from], medias[index], () => { activeTl = null; });
@@ -614,70 +621,11 @@ function initHomeSlider(root) {
     if (activeTl) activeTl.kill();
     st.kill();
     window.removeEventListener('menu-toggle', onMenuToggle);
-    gsap.killTweensOf([progressEl, ...medias, ...medias.map((m) => m.querySelector('img')), ...slides.map((s) => s.querySelector('.slider__heading')), countEl]);
+    gsap.killTweensOf([progressEl, ...medias, ...medias.map((m) => m.querySelector('img')), ...slides.flatMap((s) => [...s.querySelectorAll('.slider__heading, .slider__desc')]), countEl]);
   };
 }
 
-/* --- slider ofertowy (pełna szerokość, autoplay + klik bez cooldownu) --- */
-function initPageSlider(root) {
-  const medias = gsap.utils.toArray(root.querySelectorAll('.pslider__media'));
-  const nextBtn = root.querySelector('[data-pslider-next]');
-  const countEl = root.querySelector('[data-pslider-count]');
-  const stage = root.querySelector('.pslider__viewport');
-  const AUTOPLAY = 5.5;
-  let index = 0;
-  let activeTl = null;
-  let inView = false;
-  let hovering = false;
-
-  const timer = prefersReduced || medias.length < 2 ? null
-    : gsap.delayedCall(AUTOPLAY, () => go(index + 1)).pause();
-
-  const syncTimer = () => {
-    if (!timer) return;
-    if (inView && !hovering && !menuOpen) timer.play();
-    else timer.pause();
-  };
-
-  function go(to) {
-    if (medias.length < 2) return;
-    const from = index;
-    index = (to + medias.length) % medias.length;
-    if (index === from) return;
-    if (activeTl) { activeTl.progress(1); activeTl = null; }
-    if (timer) timer.restart(true).pause();
-    activeTl = slideTransition(medias[from], medias[index], () => { activeTl = null; });
-    rollCounterTo(countEl, pad2(index));
-    syncTimer();
-  }
-
-  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(index + 1); });
-  stage.addEventListener('click', () => go(index + 1));
-  stage.addEventListener('pointerenter', () => { hovering = true; syncTimer(); });
-  stage.addEventListener('pointerleave', () => { hovering = false; syncTimer(); });
-
-  const onMenuToggle = () => syncTimer();
-  window.addEventListener('menu-toggle', onMenuToggle);
-
-  const st = ScrollTrigger.create({
-    trigger: root,
-    start: 'top 90%',
-    end: 'bottom 10%',
-    onToggle: (self) => { inView = self.isActive; syncTimer(); },
-  });
-
-  syncTimer();
-
-  return () => {
-    if (timer) timer.kill();
-    if (activeTl) activeTl.kill();
-    st.kill();
-    window.removeEventListener('menu-toggle', onMenuToggle);
-    gsap.killTweensOf([...medias, ...medias.map((m) => m.querySelector('img')), countEl]);
-  };
-}
-
-/* --- pozioma galeria projektu (pin + scrub) --- */
+/* --- pozioma galeria (pin + scrub) — projekty i strony ofertowe --- */
 function initGallery(root) {
   const track = root.querySelector('.hgallery__track');
   if (instantBoot) {
@@ -759,20 +707,14 @@ function pageHeroHTML(titleLines) {
 
 function offerViewHTML(slug) {
   const o = OFFERS[slug];
-  const slides = o.slides.map((s, i) => `
-    <figure class="pslider__media${i === 0 ? ' is-active' : ''}">
-      ${imgTag(s.id, s.alt, { sizes: '92vw', eager: i === 0, widths: [800, 1200, 1700, 2200] })}
+  const items = o.slides.map((s, i) => `
+    <figure class="hgallery__item" style="aspect-ratio: ${s.ar};" data-gallery-item>
+      ${imgTag(s.id, s.alt, { sizes: '(max-width: 900px) 92vw, 60vw', eager: i === 0, widths: [700, 1100, 1600] })}
     </figure>`).join('');
   return `
     ${pageHeroHTML(o.titleLines)}
-    <section class="pslider container" data-pslider aria-label="Galeria — ${o.label}">
-      <div class="pslider__viewport" data-cursor-zone data-page-media>
-        ${slides}
-        <button class="pslider__next" type="button" data-pslider-next aria-label="Następne zdjęcie">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.4"/></svg>
-        </button>
-      </div>
-      <div class="pslider__count"><span class="pslider__count-roll"><span data-pslider-count>01</span></span>&nbsp;—&nbsp;${pad2(o.slides.length - 1)}</div>
+    <section class="hgallery" data-hgallery aria-label="Galeria — ${o.label}">
+      <div class="hgallery__track">${items}</div>
     </section>
     <section class="statement container">
       <p class="statement__text" data-lines>${o.statement}</p>
@@ -1069,7 +1011,7 @@ function mountView(route) {
       }
       buildScrollAnimations(homeView);
     } else if (route.type === 'offer') {
-      viewCleanups.push(initPageSlider(pageView.querySelector('[data-pslider]')));
+      viewCleanups.push(initGallery(pageView.querySelector('[data-hgallery]')));
       buildScrollAnimations(pageView);
     } else if (route.type === 'project') {
       viewCleanups.push(initGallery(pageView.querySelector('[data-hgallery]')));
@@ -1098,10 +1040,7 @@ function enterView(route) {
     if (heroSplit) heroSplit.revert();
     heroSplit = new SplitText(heroTitle, { type: 'lines', mask: 'lines', autoSplit: true });
     tl.from(heroSplit.lines, { yPercent: 112, duration: 1.15, stagger: 0.12, ease: 'power4.out' }, 0.05);
-    tl.from(homeView.querySelectorAll('[data-hero-fade]'), {
-      y: 26, opacity: 0, duration: 0.95, stagger: 0.14, ease: 'power3.out',
-    }, 0.5);
-    tl.from(homeView.querySelector('[data-slider]'), { y: 56, opacity: 0, duration: 1.1, ease: 'power3.out' }, 0.62);
+    tl.from(homeView.querySelector('[data-slider]'), { y: 56, opacity: 0, duration: 1.1, ease: 'power3.out' }, 0.4);
   } else if (route.type === 'project') {
     tl.from(pageView.querySelectorAll('[data-gallery-item]'), {
       x: 90, opacity: 0, duration: 1.1, stagger: 0.08, ease: 'power3.out',
@@ -1110,10 +1049,13 @@ function enterView(route) {
     const title = pageView.querySelector('[data-page-title]');
     const split = new SplitText(title, { type: 'lines', mask: 'lines', autoSplit: true });
     tl.from(split.lines, { yPercent: 112, duration: 1.1, stagger: 0.1, ease: 'power4.out' }, 0.05);
-    const media = pageView.querySelector('[data-page-media], .pbanner, .statement');
-    if (media) tl.from(media, { y: 64, opacity: 0, duration: 1.05, ease: 'power3.out' }, 0.35);
-    const count = pageView.querySelector('.pslider__count');
-    if (count) tl.from(count, { opacity: 0, duration: 0.6 }, 0.8);
+    const gItems = pageView.querySelectorAll('[data-gallery-item]');
+    if (gItems.length) {
+      tl.from(gItems, { x: 90, opacity: 0, duration: 1.1, stagger: 0.08, ease: 'power3.out' }, 0.4);
+    } else {
+      const media = pageView.querySelector('.pbanner, .statement');
+      if (media) tl.from(media, { y: 64, opacity: 0, duration: 1.05, ease: 'power3.out' }, 0.35);
+    }
   }
   return tl;
 }
