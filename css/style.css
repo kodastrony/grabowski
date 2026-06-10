@@ -290,7 +290,14 @@ html:not(.js) .intro { display: none; }
    HERO
    ============================================================ */
 .hero {
-  padding-top: clamp(9rem, 24vh, 15rem);
+  padding-top: clamp(8rem, 21vh, 13.5rem);
+}
+
+.hero__kicker {
+  margin-left: 38%;
+  margin-bottom: clamp(1.2rem, 2.6vh, 2rem);
+  font-size: var(--fs-label);
+  color: var(--ink-soft);
 }
 
 .hero__title {
@@ -300,6 +307,41 @@ html:not(.js) .intro { display: none; }
   line-height: 1.04;
   letter-spacing: -0.025em;
 }
+
+.hero__foot {
+  margin-left: 38%;
+  margin-top: clamp(1.8rem, 4vh, 3rem);
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(2rem, 5vw, 5rem);
+  flex-wrap: wrap;
+}
+
+.hero__lead {
+  max-width: 34ch;
+  color: var(--ink-soft);
+  font-size: clamp(1rem, 1.25vw, 1.2rem);
+  line-height: 1.6;
+}
+
+.hero__scroll {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--fs-label);
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+  margin-top: 0.35rem;
+}
+
+.hero__scroll svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.4s var(--ease-out);
+}
+
+.hero__scroll:hover svg { transform: translateY(4px); }
 
 /* ============================================================
    SLIDER
@@ -324,11 +366,19 @@ html:not(.js) .intro { display: none; }
   display: flex;
   align-items: flex-end;
   padding: clamp(1.5rem, 2.8vw, 3.4rem);
+  opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  /* crossfade w CSS — niewrażliwy na przerwane tweeny JS */
+  transition: opacity 0.45s ease, visibility 0s linear 0.45s;
 }
 
-.slider__slide.is-active { visibility: visible; pointer-events: auto; }
+.slider__slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.55s ease 0.15s, visibility 0s;
+}
 
 .slider__heading {
   font-size: var(--fs-slider);
@@ -365,6 +415,7 @@ html:not(.js) .intro { display: none; }
   position: absolute;
   inset: 0;
   visibility: hidden;
+  will-change: transform;
 }
 
 .slider__media.is-active { visibility: visible; }
@@ -763,6 +814,7 @@ html:not(.js) .intro { display: none; }
   position: absolute;
   inset: 0;
   visibility: hidden;
+  will-change: transform;
 }
 
 .pslider__media.is-active { visibility: visible; }
@@ -1216,6 +1268,7 @@ button:hover > .roll .roll__item--ghost,
 @media (max-width: 1100px) {
   .menu__grid { margin-left: 0; }
   .hero__title { margin-left: 22%; }
+  .hero__kicker, .hero__foot { margin-left: 22%; }
   .page-hero__title { margin-left: 14%; }
   .process__row { grid-template-columns: 3.5rem 1fr; }
   .process__desc { grid-column: 2; max-width: 60ch; }
@@ -1263,6 +1316,7 @@ button:hover > .roll .roll__item--ghost,
   .menu__grid { grid-template-columns: 1fr; gap: 2.4rem; }
   .menu__list { margin-top: 1.1rem; }
 
+  .hero__kicker, .hero__foot { margin-left: 0; }
   .page-hero__title { margin-left: 0; }
   .pslider__viewport { aspect-ratio: 4 / 3; }
   .pgrid { grid-template-columns: 1fr; gap: 2.6rem; }

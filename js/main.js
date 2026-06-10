@@ -350,6 +350,7 @@ function setMenu(open) {
   if (open) menuTl.timeScale(1).play();
   else menuTl.timeScale(1.35).reverse();
   refreshCursorZone();
+  window.dispatchEvent(new Event('menu-toggle'));
 }
 
 menuBtn.addEventListener('click', () => setMenu(!menuOpen));
@@ -488,47 +489,59 @@ function buildScrollAnimations(scope) {
 
 /* ------------------------------------------------------------
    SLIDERY — wspólna mechanika przejścia
+   Wyłącznie transformy (kompozytor GPU), bez clip-path.
+   Przejście jest przerywalne: wywołujący finalizuje poprzednie
+   przez tl.progress(1) i od razu startuje następne.
    ------------------------------------------------------------ */
 function slideTransition(outMedia, inMedia, onDone) {
   const inImg = inMedia.querySelector('img');
-  gsap.set(inMedia, { visibility: 'visible', zIndex: 2, clipPath: 'inset(0% 0% 0% 100%)' });
+  const outImg = outMedia.querySelector('img');
   inMedia.classList.add('is-active');
 
   if (prefersReduced) {
-    gsap.set(inMedia, { clipPath: 'inset(0% 0% 0% 0%)' });
+    gsap.set(inMedia, { visibility: 'visible', zIndex: 1, xPercent: 0 });
     gsap.set(outMedia, { visibility: 'hidden', zIndex: 0 });
     outMedia.classList.remove('is-active');
     if (onDone) onDone();
     return null;
   }
 
-  const outImg = outMedia.querySelector('img');
+  gsap.set(inMedia, { visibility: 'visible', zIndex: 2, xPercent: 100 });
+
   const tl = gsap.timeline({
-    defaults: { ease: 'power4.inOut' },
     onComplete: () => {
-      gsap.set(outMedia, { visibility: 'hidden', zIndex: 0, clipPath: 'inset(0% 0% 0% 0%)' });
+      gsap.set(outMedia, { visibility: 'hidden', zIndex: 0, xPercent: 0 });
       gsap.set(outImg, { xPercent: 0, scale: 1 });
+      gsap.set(inMedia, { zIndex: 1 });
       outMedia.classList.remove('is-active');
       if (onDone) onDone();
     },
   });
-  tl.to(inMedia, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3 }, 0)
-    .fromTo(inImg, { xPercent: 13, scale: 1.09 }, { xPercent: 0, scale: 1, duration: 2.0, ease: 'expo.out' }, 0.12)
-    .to(outImg, { xPercent: -9, scale: 1.05, duration: 1.3 }, 0);
+  // nasunięcie z prawej + kontrprzesunięcie obrazka = efekt okna,
+  // wychodzące zdjęcie lekko odpływa w lewo pod spodem
+  tl.fromTo(inMedia, { xPercent: 100 }, { xPercent: 0, duration: 1.15, ease: 'power3.inOut' }, 0)
+    .fromTo(inImg, { xPercent: -44, scale: 1.06 }, { xPercent: 0, scale: 1, duration: 1.15, ease: 'power3.inOut' }, 0)
+    .to(outImg, { xPercent: -16, duration: 1.15, ease: 'power3.inOut' }, 0);
   return tl;
 }
 
-function rollCounter(tl, countEl, value) {
+function rollCounterTo(countEl, value) {
   if (!countEl) return;
-  if (prefersReduced || !tl) { countEl.textContent = value; return; }
-  tl.to(countEl, { yPercent: -110, duration: 0.3, ease: 'power2.in' }, 0)
+  if (prefersReduced) { countEl.textContent = value; return; }
+  gsap.killTweensOf(countEl);
+  gsap.timeline()
+    .to(countEl, { yPercent: -110, duration: 0.28, ease: 'power2.in' })
     .add(() => { countEl.textContent = value; })
-    .fromTo(countEl, { yPercent: 110 }, { yPercent: 0, duration: 0.35, ease: 'power3.out' });
+    .fromTo(countEl, { yPercent: 110 }, { yPercent: 0, duration: 0.34, ease: 'power3.out' });
 }
 
 const pad2 = (n) => String(n + 1).padStart(2, '0');
 
-/* --- slider home (panel + autoplay) --- */
+/* --- slider home (panel + autoplay) ---
+   Pasek postępu to JEDYNY zegar autoplayu: restart przy każdej
+   zmianie slajdu, pauza gdy hover / poza ekranem / menu otwarte.
+   Klik zmienia slajd NATYCHMIAST (poprzednie przejście jest
+   finalizowane skokiem do końca — zero cooldownu). */
 function initHomeSlider(root) {
   const slides = gsap.utils.toArray(root.querySelectorAll('.slider__slide'));
   const medias = gsap.utils.toArray(root.querySelectorAll('.slider__media'));
@@ -539,74 +552,73 @@ function initHomeSlider(root) {
 
   const AUTOPLAY = 6.5;
   let index = 0;
-  let busy = false;
-  let progressTween = null;
+  let activeTl = null;
   let inView = false;
+  let hovering = false;
 
-  function startProgress() {
-    if (progressTween) progressTween.kill();
-    if (prefersReduced) return;
-    progressTween = gsap.fromTo(progressEl, { scaleX: 0 }, {
-      scaleX: 1, duration: AUTOPLAY, ease: 'none',
-      onComplete: () => go(index + 1),
-    });
-    if (!inView || menuOpen) progressTween.pause();
-  }
+  const progress = prefersReduced ? null : gsap.fromTo(progressEl,
+    { scaleX: 0 },
+    { scaleX: 1, duration: AUTOPLAY, ease: 'none', paused: true, onComplete: () => go(index + 1) });
 
-  const pauseProgress = () => progressTween && progressTween.pause();
-  const resumeProgress = () => { if (progressTween && inView && !menuOpen) progressTween.resume(); };
+  const syncProgress = () => {
+    if (!progress) return;
+    if (inView && !hovering && !menuOpen) progress.play();
+    else progress.pause();
+  };
 
   function go(to) {
-    if (busy) return;
+    if (slides.length < 2) return;
     const from = index;
     index = (to + slides.length) % slides.length;
-    if (index === from) { startProgress(); return; }
-    busy = true;
+    if (index === from) return;
+
+    if (activeTl) { activeTl.progress(1); activeTl = null; }
+    if (progress) { progress.pause(0); }
 
     slides.forEach((s) => s.classList.remove('is-active'));
-    slides[index].classList.add('is-active');
+    const inSlide = slides[index];
+    inSlide.classList.add('is-active');
 
-    const tl = slideTransition(medias[from], medias[index], () => { busy = false; startProgress(); });
-
-    if (!prefersReduced && tl) {
-      tl.to(slides[from].querySelector('.slider__heading'), {
-        yPercent: -55, opacity: 0, duration: 0.5, ease: 'power2.in',
-      }, 0);
-      tl.set(slides[from].querySelector('.slider__heading'), { yPercent: 0, opacity: 1 });
-      tl.fromTo(slides[index].querySelector('.slider__heading'),
-        { yPercent: 80, opacity: 0 },
-        { yPercent: 0, opacity: 1, duration: 0.95, ease: 'expo.out' }, 0.4);
-    } else if (prefersReduced) {
-      busy = false;
+    // tekst: crossfade robi CSS po klasie; JS dokłada tylko delikatny
+    // wjazd nagłówka — zawsze z killem poprzedniego tweena
+    const heading = inSlide.querySelector('.slider__heading');
+    gsap.killTweensOf(heading);
+    if (!prefersReduced) {
+      gsap.fromTo(heading, { y: 26 }, { y: 0, duration: 0.85, ease: 'expo.out', delay: 0.15, clearProps: 'transform' });
     }
-    rollCounter(tl, countEl, pad2(index));
+
+    activeTl = slideTransition(medias[from], medias[index], () => { activeTl = null; });
+    rollCounterTo(countEl, pad2(index));
+    syncProgress();
   }
 
   nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(index + 1); });
   stage.addEventListener('click', () => go(index + 1));
-  stage.addEventListener('pointerenter', pauseProgress);
-  stage.addEventListener('pointerleave', resumeProgress);
+  stage.addEventListener('pointerenter', () => { hovering = true; syncProgress(); });
+  stage.addEventListener('pointerleave', () => { hovering = false; syncProgress(); });
+
+  const onMenuToggle = () => syncProgress();
+  window.addEventListener('menu-toggle', onMenuToggle);
 
   const st = ScrollTrigger.create({
     trigger: root,
-    start: 'top 90%',
-    end: 'bottom 10%',
-    onToggle: (self) => {
-      inView = self.isActive;
-      if (inView) resumeProgress(); else pauseProgress();
-    },
+    start: 'top 92%',
+    end: 'bottom 8%',
+    onToggle: (self) => { inView = self.isActive; syncProgress(); },
   });
 
-  startProgress();
+  syncProgress();
 
   return () => {
-    if (progressTween) progressTween.kill();
+    if (progress) progress.kill();
+    if (activeTl) activeTl.kill();
     st.kill();
+    window.removeEventListener('menu-toggle', onMenuToggle);
     gsap.killTweensOf([progressEl, ...medias, ...medias.map((m) => m.querySelector('img')), ...slides.map((s) => s.querySelector('.slider__heading')), countEl]);
   };
 }
 
-/* --- slider ofertowy (pełna szerokość, autoplay + klik) --- */
+/* --- slider ofertowy (pełna szerokość, autoplay + klik bez cooldownu) --- */
 function initPageSlider(root) {
   const medias = gsap.utils.toArray(root.querySelectorAll('.pslider__media'));
   const nextBtn = root.querySelector('[data-pslider-next]');
@@ -614,52 +626,53 @@ function initPageSlider(root) {
   const stage = root.querySelector('.pslider__viewport');
   const AUTOPLAY = 5.5;
   let index = 0;
-  let busy = false;
-  let timer = null;
+  let activeTl = null;
   let inView = false;
   let hovering = false;
 
-  function schedule() {
-    if (timer) timer.kill();
-    if (prefersReduced || medias.length < 2) return;
-    timer = gsap.delayedCall(AUTOPLAY, () => go(index + 1));
-    if (!inView || hovering || menuOpen) timer.pause();
-  }
+  const timer = prefersReduced || medias.length < 2 ? null
+    : gsap.delayedCall(AUTOPLAY, () => go(index + 1)).pause();
+
+  const syncTimer = () => {
+    if (!timer) return;
+    if (inView && !hovering && !menuOpen) timer.play();
+    else timer.pause();
+  };
 
   function go(to) {
-    if (busy || medias.length < 2) return;
-    if (timer) timer.kill();
+    if (medias.length < 2) return;
     const from = index;
     index = (to + medias.length) % medias.length;
-    if (index === from) { schedule(); return; }
-    busy = true;
-    const tl = slideTransition(medias[from], medias[index], () => { busy = false; schedule(); });
-    if (prefersReduced) busy = false;
-    rollCounter(tl, countEl, pad2(index));
+    if (index === from) return;
+    if (activeTl) { activeTl.progress(1); activeTl = null; }
+    if (timer) timer.restart(true).pause();
+    activeTl = slideTransition(medias[from], medias[index], () => { activeTl = null; });
+    rollCounterTo(countEl, pad2(index));
+    syncTimer();
   }
 
-  nextBtn.addEventListener('click', (e) => { e.preventDefault(); go(index + 1); });
+  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(index + 1); });
   stage.addEventListener('click', () => go(index + 1));
-  stage.addEventListener('pointerenter', () => { hovering = true; if (timer) timer.pause(); });
-  stage.addEventListener('pointerleave', () => { hovering = false; if (timer && inView && !menuOpen) timer.resume(); });
+  stage.addEventListener('pointerenter', () => { hovering = true; syncTimer(); });
+  stage.addEventListener('pointerleave', () => { hovering = false; syncTimer(); });
+
+  const onMenuToggle = () => syncTimer();
+  window.addEventListener('menu-toggle', onMenuToggle);
 
   const st = ScrollTrigger.create({
     trigger: root,
     start: 'top 90%',
     end: 'bottom 10%',
-    onToggle: (self) => {
-      inView = self.isActive;
-      if (!timer) return;
-      if (inView && !hovering && !menuOpen) timer.resume();
-      else timer.pause();
-    },
+    onToggle: (self) => { inView = self.isActive; syncTimer(); },
   });
 
-  schedule();
+  syncTimer();
 
   return () => {
     if (timer) timer.kill();
+    if (activeTl) activeTl.kill();
     st.kill();
+    window.removeEventListener('menu-toggle', onMenuToggle);
     gsap.killTweensOf([...medias, ...medias.map((m) => m.querySelector('img')), countEl]);
   };
 }
@@ -672,23 +685,25 @@ function initGallery(root) {
     return () => {};
   }
   const dist = () => Math.max(0, track.scrollWidth - window.innerWidth);
-  const tween = gsap.to(track, {
-    x: () => -dist(),
-    ease: 'none',
+  // 85% dystansu pinowania = jazda w poziomie, ostatnie 15% = postój
+  // przy prawej krawędzi — galeria ZAWSZE dojeżdża do końca, zanim
+  // strona ruszy w dół (scrub nie zdąży „uciec" w pion)
+  const tl = gsap.timeline({
     scrollTrigger: {
       trigger: root,
       start: 'top 96px',
-      // dłuższy dystans pionowy niż poziomy = wolniejsze, spokojniejsze tempo
-      end: () => '+=' + Math.round(dist() * 1.35),
+      end: () => '+=' + Math.round(dist() * 1.7),
       pin: true,
-      scrub: 2.2,
+      scrub: 1.2,
       invalidateOnRefresh: true,
       anticipatePin: 1,
     },
   });
+  tl.to(track, { x: () => -dist(), ease: 'none', duration: 0.85 })
+    .to(track, { x: () => -dist(), ease: 'none', duration: 0.15 });
   return () => {
-    tween.scrollTrigger && tween.scrollTrigger.kill();
-    tween.kill();
+    tl.scrollTrigger && tl.scrollTrigger.kill();
+    tl.kill();
     gsap.set(track, { clearProps: 'transform' });
   };
 }
@@ -977,8 +992,8 @@ let currentRoute = { type: 'init' };
 let pendingScroll = null;
 let heroSplit = null;
 
-function parseRoute() {
-  const h = location.hash || '#/';
+function parseRoute(hash) {
+  const h = hash || location.hash || '#/';
   let m = h.match(/^#\/oferta\/([a-z-]+)/);
   if (m && OFFERS[m[1]]) return { type: 'offer', slug: m[1] };
   m = h.match(/^#\/projekt\/([a-z-]+)/);
@@ -987,6 +1002,8 @@ function parseRoute() {
   if (m) return { type: 'page', slug: m[1] };
   return { type: 'home' };
 }
+
+const sameRoute = (a, b) => a.type === b.type && a.slug === b.slug;
 
 function routeTitle(route) {
   if (route.type === 'offer') return OFFERS[route.slug].label;
@@ -1081,7 +1098,10 @@ function enterView(route) {
     if (heroSplit) heroSplit.revert();
     heroSplit = new SplitText(heroTitle, { type: 'lines', mask: 'lines', autoSplit: true });
     tl.from(heroSplit.lines, { yPercent: 112, duration: 1.15, stagger: 0.12, ease: 'power4.out' }, 0.05);
-    tl.from(homeView.querySelector('[data-slider]'), { y: 56, opacity: 0, duration: 1.1, ease: 'power3.out' }, 0.4);
+    tl.from(homeView.querySelectorAll('[data-hero-fade]'), {
+      y: 26, opacity: 0, duration: 0.95, stagger: 0.14, ease: 'power3.out',
+    }, 0.5);
+    tl.from(homeView.querySelector('[data-slider]'), { y: 56, opacity: 0, duration: 1.1, ease: 'power3.out' }, 0.62);
   } else if (route.type === 'project') {
     tl.from(pageView.querySelectorAll('[data-gallery-item]'), {
       x: 90, opacity: 0, duration: 1.1, stagger: 0.08, ease: 'power3.out',
@@ -1142,7 +1162,7 @@ function transitionTo(route) {
 
 window.addEventListener('hashchange', () => {
   const route = parseRoute();
-  if (route.type === currentRoute.type && route.slug === currentRoute.slug) return;
+  if (sameRoute(route, currentRoute)) return;
   transitionTo(route);
 });
 
@@ -1155,6 +1175,12 @@ document.addEventListener('click', (e) => {
   const href = a.getAttribute('href');
   if (href.startsWith('#/')) {
     setMenu(false);
+    // klik w logo / link bieżącej trasy = płynnie na górę strony
+    if (sameRoute(parseRoute(href), currentRoute)) {
+      e.preventDefault();
+      if (smoother) gsap.to(smoother, { scrollTop: 0, duration: 1.1, ease: 'power3.inOut' });
+      else window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+    }
     return; // router obsłuży hashchange
   }
   e.preventDefault();

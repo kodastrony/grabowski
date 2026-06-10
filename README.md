@@ -43,8 +43,12 @@ albo po prostu otwórz `index.html` (animacje działają też z `file://`).
 - **Intro** — znak logo (zazębiające się grzebienie = złącze stolarskie)
   składa się z dwóch stron, potem plansza wyjeżdża do góry
 - **Smooth scroll + parallax** — ScrollSmoother, zdjęcia z `data-speed="auto"`
-- **Hero slider** — biały panel z tekstem + zdjęcie, przejścia clip-path,
-  rolowany licznik 01—03, pasek postępu autoplay, customowy kursor-strzałka
+- **Hero** — kicker, tytuł, lead i link „Zobacz, co robimy"
+- **Hero slider (2 slajdy)** — biały panel z tekstem + zdjęcie; przejścia
+  wyłącznie na transformach (nasunięcie z prawej + parallax okna),
+  przerywalne bez cooldownu (klik zawsze działa), pasek postępu jako
+  jedyny zegar autoplayu (restart przy zmianie, pauza na hover/poza
+  ekranem/przy otwartym menu), rolowany licznik 01—02, kursor-strzałka
 - **Rolowane linki** (hover) — generowane przez JS z `[data-roll]`
 - **Reveals** — SplitText maskowane linie dużych akapitów + fade-up sekcji
 - **Mega-menu** — panel zjeżdżający spod headera, 3 kolumny, backdrop;
