@@ -519,7 +519,7 @@ function initHomeSlider(root) {
   const progressEl = root.querySelector('[data-slider-progress]');
   const stage = root.querySelector('.slider__stage');
 
-  const AUTOPLAY = 6.5;
+  const AUTOPLAY = 6;
   const len = medias.length;
   const wrapOff = gsap.utils.wrap(-len / 2, len / 2);
   const pos = { p: 0 };
@@ -530,14 +530,14 @@ function initHomeSlider(root) {
 
   // mapowanie pozycji ułamkowej na transformy: sąsiednie zdjęcia
   // jadą krawędź w krawędź jak fizyczna taśma, obrazki w środku
-  // dostają kontrprzesunięcie (parallax okna)
+  // dostają delikatne kontrprzesunięcie (parallax okna)
   function render() {
     for (let i = 0; i < len; i++) {
       const off = wrapOff(i - pos.p);
       if (Math.abs(off) < 1) {
         medias[i].style.visibility = 'visible';
         gsap.set(medias[i], { xPercent: off * 100 });
-        gsap.set(imgs[i], { xPercent: off * -32 });
+        gsap.set(imgs[i], { xPercent: off * -18 });
       } else if (medias[i].style.visibility !== 'hidden') {
         medias[i].style.visibility = 'hidden';
       }
@@ -557,15 +557,16 @@ function initHomeSlider(root) {
 
   const activeIdx = () => ((target % len) + len) % len;
 
+  // tekst jako follow-through: rusza tuż przed lądowaniem obrazu
   function applyText(fresh) {
     const idx = activeIdx();
     slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
     const copy = slides[idx].querySelectorAll('.slider__heading, .slider__desc');
     gsap.killTweensOf(copy);
     if (!prefersReduced) {
-      gsap.fromTo(copy, { y: 30 }, {
-        y: 0, duration: 1.0, stagger: 0.1, ease: 'expo.out',
-        delay: fresh ? 0.38 : 0.14, clearProps: 'transform',
+      gsap.fromTo(copy, { y: 24 }, {
+        y: 0, duration: 0.6, stagger: 0.07, ease: 'expo.out',
+        delay: fresh ? 0.22 : 0.1, clearProps: 'transform',
       });
     }
     rollCounterTo(countEl, pad2(idx));
@@ -573,9 +574,9 @@ function initHomeSlider(root) {
 
   function go(step) {
     if (len < 2) return;
-    // świeże przejście (taśma stoi) dostaje pełną choreografię inOut;
-    // klik w trakcie jazdy kontynuuje pęd bez zwalniania (power3.out)
-    const wasMoving = Boolean(moveTween && moveTween.isActive());
+    // 0.4–0.5 s i symetryczny ease = ruch bez wahania na starcie
+    // i bez martwego ogona; klik w trakcie jazdy kontynuuje pęd
+    const wasMoving = moveTween !== null;
     target += step;
     applyText(!wasMoving);
     if (progress) progress.pause(0);
@@ -591,8 +592,8 @@ function initHomeSlider(root) {
     if (moveTween) moveTween.kill();
     moveTween = gsap.to(pos, {
       p: target,
-      duration: wasMoving ? Math.min(0.95 + 0.35 * distance, 2.1) : 1.5,
-      ease: wasMoving ? 'power3.out' : 'power3.inOut',
+      duration: wasMoving ? Math.min(0.45 + 0.12 * distance, 0.85) : 0.5,
+      ease: wasMoving ? 'power2.out' : 'power2.inOut',
       onUpdate: render,
       onComplete: () => {
         moveTween = null;
@@ -603,14 +604,6 @@ function initHomeSlider(root) {
         render();
       },
     });
-
-    // oddech skali wjeżdżającego zdjęcia — wybrzmiewa dłużej niż
-    // sama jazda taśmy, już po zatrzymaniu (warstwowy timing)
-    if (!wasMoving) {
-      const img = imgs[activeIdx()];
-      gsap.killTweensOf(img, 'scale');
-      gsap.fromTo(img, { scale: 1.07 }, { scale: 1, duration: 2.2, ease: 'expo.out' });
-    }
 
     syncProgress();
   }
