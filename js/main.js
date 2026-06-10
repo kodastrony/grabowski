@@ -489,47 +489,8 @@ function buildScrollAnimations(scope) {
 }
 
 /* ------------------------------------------------------------
-   SLIDERY — wspólna mechanika przejścia
-   Wyłącznie transformy (kompozytor GPU), bez clip-path.
-   Przejście jest przerywalne: wywołujący finalizuje poprzednie
-   przez tl.progress(1) i od razu startuje następne.
+   SLIDERY — pomocnicze
    ------------------------------------------------------------ */
-function slideTransition(outMedia, inMedia, onDone) {
-  const inImg = inMedia.querySelector('img');
-  const outImg = outMedia.querySelector('img');
-  inMedia.classList.add('is-active');
-
-  if (prefersReduced) {
-    gsap.set(inMedia, { visibility: 'visible', zIndex: 1, xPercent: 0 });
-    gsap.set(outMedia, { visibility: 'hidden', zIndex: 0 });
-    outMedia.classList.remove('is-active');
-    if (onDone) onDone();
-    return null;
-  }
-
-  gsap.set(inMedia, { visibility: 'visible', zIndex: 2, xPercent: 100 });
-
-  const tl = gsap.timeline({
-    onComplete: () => {
-      gsap.set(outMedia, { visibility: 'hidden', zIndex: 0, xPercent: 0 });
-      gsap.set(outImg, { xPercent: 0, scale: 1 });
-      gsap.set(inMedia, { zIndex: 1 });
-      outMedia.classList.remove('is-active');
-      if (onDone) onDone();
-    },
-  });
-  // klasyczne przepchnięcie: stare zdjęcie AKTYWNIE wyjeżdża w lewo,
-  // nowe wjeżdża z prawej tym samym ruchem; obrazki w środku dostają
-  // kontrprzesunięcie (parallax okna) — jeden wspólny easing
-  const D = 1.05;
-  const EASE = 'power3.inOut';
-  tl.fromTo(inMedia, { xPercent: 100 }, { xPercent: 0, duration: D, ease: EASE }, 0)
-    .fromTo(inImg, { xPercent: -32, scale: 1.05 }, { xPercent: 0, scale: 1, duration: D, ease: EASE }, 0)
-    .to(outMedia, { xPercent: -100, duration: D, ease: EASE }, 0)
-    .to(outImg, { xPercent: 32, duration: D, ease: EASE }, 0);
-  return tl;
-}
-
 function rollCounterTo(countEl, value) {
   if (!countEl) return;
   if (prefersReduced) { countEl.textContent = value; return; }
@@ -543,27 +504,50 @@ function rollCounterTo(countEl, value) {
 const pad2 = (n) => String(n + 1).padStart(2, '0');
 
 /* --- slider home (panel + autoplay) ---
-   Pasek postępu to JEDYNY zegar autoplayu: restart przy każdej
-   zmianie slajdu, pauza gdy hover / poza ekranem / menu otwarte.
-   Klik zmienia slajd NATYCHMIAST (poprzednie przejście jest
-   finalizowane skokiem do końca — zero cooldownu). */
+   Wirtualna taśma: pozycja jest liczbą zmiennoprzecinkową, kliknięcia
+   przesuwają tylko CEL, a jeden retargetowany tween dowozi pozycję.
+   Spam kliknięć = dłuższy, płynny przejazd przez kolejne slajdy —
+   pozycja nigdy nie skacze, więc nie ma się co zacinać.
+   Pasek postępu to jedyny zegar autoplayu (restart przy zmianie,
+   pauza gdy hover / poza ekranem / menu otwarte). */
 function initHomeSlider(root) {
   const slides = gsap.utils.toArray(root.querySelectorAll('.slider__slide'));
   const medias = gsap.utils.toArray(root.querySelectorAll('.slider__media'));
+  const imgs = medias.map((m) => m.querySelector('img'));
   const nextBtn = root.querySelector('[data-slider-next]');
   const countEl = root.querySelector('[data-slider-count]');
   const progressEl = root.querySelector('[data-slider-progress]');
   const stage = root.querySelector('.slider__stage');
 
   const AUTOPLAY = 6.5;
-  let index = 0;
-  let activeTl = null;
+  const len = medias.length;
+  const wrapOff = gsap.utils.wrap(-len / 2, len / 2);
+  const pos = { p: 0 };
+  let target = 0;
+  let moveTween = null;
   let inView = false;
   let hovering = false;
 
+  // mapowanie pozycji ułamkowej na transformy: sąsiednie zdjęcia
+  // jadą krawędź w krawędź jak fizyczna taśma, obrazki w środku
+  // dostają kontrprzesunięcie (parallax okna)
+  function render() {
+    for (let i = 0; i < len; i++) {
+      const off = wrapOff(i - pos.p);
+      if (Math.abs(off) < 1) {
+        medias[i].style.visibility = 'visible';
+        gsap.set(medias[i], { xPercent: off * 100 });
+        gsap.set(imgs[i], { xPercent: off * -32 });
+      } else if (medias[i].style.visibility !== 'hidden') {
+        medias[i].style.visibility = 'hidden';
+      }
+    }
+  }
+  render();
+
   const progress = prefersReduced ? null : gsap.fromTo(progressEl,
     { scaleX: 0 },
-    { scaleX: 1, duration: AUTOPLAY, ease: 'none', paused: true, onComplete: () => go(index + 1) });
+    { scaleX: 1, duration: AUTOPLAY, ease: 'none', paused: true, onComplete: () => go(1) });
 
   const syncProgress = () => {
     if (!progress) return;
@@ -571,36 +555,55 @@ function initHomeSlider(root) {
     else progress.pause();
   };
 
-  function go(to) {
-    if (slides.length < 2) return;
-    const from = index;
-    index = (to + slides.length) % slides.length;
-    if (index === from) return;
+  const activeIdx = () => ((target % len) + len) % len;
 
-    if (activeTl) { activeTl.progress(1); activeTl = null; }
-    if (progress) { progress.pause(0); }
-
-    slides.forEach((s) => s.classList.remove('is-active'));
-    const inSlide = slides[index];
-    inSlide.classList.add('is-active');
-
-    // tekst: crossfade robi CSS po klasie; JS dokłada tylko delikatny
-    // wjazd nagłówka i opisu — zawsze z killem poprzednich tweenów
-    const copy = inSlide.querySelectorAll('.slider__heading, .slider__desc');
+  function applyText() {
+    const idx = activeIdx();
+    slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
+    const copy = slides[idx].querySelectorAll('.slider__heading, .slider__desc');
     gsap.killTweensOf(copy);
     if (!prefersReduced) {
       gsap.fromTo(copy, { y: 26 }, {
         y: 0, duration: 0.85, stagger: 0.09, ease: 'expo.out', delay: 0.15, clearProps: 'transform',
       });
     }
+    rollCounterTo(countEl, pad2(idx));
+  }
 
-    activeTl = slideTransition(medias[from], medias[index], () => { activeTl = null; });
-    rollCounterTo(countEl, pad2(index));
+  function go(step) {
+    if (len < 2) return;
+    target += step;
+    applyText();
+    if (progress) progress.pause(0);
+
+    if (prefersReduced) {
+      pos.p = target = activeIdx();
+      render();
+      syncProgress();
+      return;
+    }
+
+    const distance = Math.abs(target - pos.p);
+    if (moveTween) moveTween.kill();
+    moveTween = gsap.to(pos, {
+      p: target,
+      duration: Math.min(0.95 + 0.3 * distance, 2.0),
+      ease: 'power3.out',
+      onUpdate: render,
+      onComplete: () => {
+        moveTween = null;
+        // normalizacja, żeby liczby nie rosły w nieskończoność
+        const idx = activeIdx();
+        pos.p = idx;
+        target = idx;
+        render();
+      },
+    });
     syncProgress();
   }
 
-  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(index + 1); });
-  stage.addEventListener('click', () => go(index + 1));
+  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(1); });
+  stage.addEventListener('click', () => go(1));
   stage.addEventListener('pointerenter', () => { hovering = true; syncProgress(); });
   stage.addEventListener('pointerleave', () => { hovering = false; syncProgress(); });
 
@@ -618,10 +621,10 @@ function initHomeSlider(root) {
 
   return () => {
     if (progress) progress.kill();
-    if (activeTl) activeTl.kill();
+    if (moveTween) moveTween.kill();
     st.kill();
     window.removeEventListener('menu-toggle', onMenuToggle);
-    gsap.killTweensOf([progressEl, ...medias, ...medias.map((m) => m.querySelector('img')), ...slides.flatMap((s) => [...s.querySelectorAll('.slider__heading, .slider__desc')]), countEl]);
+    gsap.killTweensOf([progressEl, ...medias, ...imgs, ...slides.flatMap((s) => [...s.querySelectorAll('.slider__heading, .slider__desc')]), countEl]);
   };
 }
 

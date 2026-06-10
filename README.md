@@ -44,12 +44,13 @@ albo po prostu otwórz `index.html` (animacje działają też z `file://`).
   składa się z dwóch stron, potem plansza wyjeżdża do góry
 - **Smooth scroll + parallax** — ScrollSmoother, zdjęcia z `data-speed="auto"`
 - **Hero slider (4 slajdy z opisami)** — biały panel z nagłówkiem
-  i krótkim opisem + zdjęcie; przepychające przejście wyłącznie na
-  transformach (stare zdjęcie aktywnie wyjeżdża w lewo, nowe wjeżdża
-  z prawej, parallax okna w środku), przerywalne bez cooldownu (klik
-  zawsze działa), pasek postępu jako jedyny zegar autoplayu (restart
-  przy zmianie, pauza na hover/poza ekranem/przy otwartym menu),
-  rolowany licznik 01—04, kursor-strzałka
+  i krótkim opisem + zdjęcie; **wirtualna taśma**: pozycja jest liczbą
+  ułamkową, kliknięcia przesuwają tylko cel, a jeden retargetowany
+  tween dowozi pozycję — spam kliknięć daje pojedynczy płynny przejazd
+  przez kolejne slajdy (zdjęcia jadą krawędź-w-krawędź z parallaxem
+  okna, bez żadnego skoku); pasek postępu jako jedyny zegar autoplayu
+  (restart przy zmianie, pauza na hover/poza ekranem/przy otwartym
+  menu), rolowany licznik 01—04, kursor-strzałka
 - **Rolowane linki** (hover) — generowane przez JS z `[data-roll]`
 - **Reveals** — SplitText maskowane linie dużych akapitów + fade-up sekcji
 - **Mega-menu** — panel zjeżdżający spod headera, 3 kolumny, backdrop;
