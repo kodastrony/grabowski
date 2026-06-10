@@ -871,13 +871,13 @@ html:not(.js) .intro { display: none; }
 
 /* kafel końcowy galerii — nawigacja dalej */
 .hgallery__item--end {
-  width: clamp(20rem, 36vw, 32rem);
+  width: clamp(21rem, 40vw, 36rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  gap: 1.1rem;
-  padding-inline: clamp(1rem, 3vw, 3rem) var(--pad);
+  gap: 1rem;
+  padding-inline: clamp(1.5rem, 4vw, 4rem) var(--pad);
 }
 
 .hgallery__end-label {
@@ -903,10 +903,9 @@ html:not(.js) .intro { display: none; }
 
 .hgallery__end-next:hover svg { transform: translateX(10px); }
 
-.hgallery__end-home {
-  font-size: var(--fs-label);
-  margin-top: 0.6rem;
-}
+.hgallery__end-next--home:hover svg { transform: translateX(-10px); }
+
+.hgallery__end-label--second { margin-top: 1.6rem; }
 
 .hgallery--static .hgallery__item--end { width: 100%; padding-inline: 0; }
 

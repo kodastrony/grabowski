@@ -55,6 +55,9 @@ const PROJECTS = {
       { id: 'photo-1622372738946-62e02505feb3', ar: '1.05', alt: 'Ciemna kuchnia z ryflowanymi frontami i wyspą' },
       { id: 'photo-1772442363851-738a548f6c5c', ar: '1.5', alt: 'Jadalnia w popołudniowym świetle, ryflowana podstawa stołu' },
       { id: 'photo-1774437290626-34d18c49598a', ar: '0.8', alt: 'Detal ciemnej zabudowy z drewnianym gniazdem elektrycznym' },
+      { id: 'photo-1576249720336-35b043fce96d', ar: '0.67', alt: 'Orzechowy stół w smudze popołudniowego światła' },
+      { id: 'photo-1631396328093-e5941f59cf7b', ar: '1.5', alt: 'Wióry i nóż na stole warsztatowym — dopasowanie frontów' },
+      { id: 'photo-1779648596383-fc041f8bd4da', ar: '0.8', alt: 'Spiżarnia z ryflowanego orzecha' },
       { id: 'photo-1736506159776-22ca388780fa', ar: '0.68', alt: 'Usłojenie orzecha amerykańskiego z bliska' },
     ],
   },
@@ -71,6 +74,9 @@ const PROJECTS = {
       { id: 'photo-1515446134809-993c501ca304', ar: '1.3', alt: 'Przekrój pnia dębu — słoje przyrostu rocznego' },
       { id: 'photo-1605635544350-5796fb1622d1', ar: '1.5', alt: 'Stół jadalniany z litych desek jesionu' },
       { id: 'photo-1583606638441-b9c746100447', ar: '1.45', alt: 'Sosnowy las we mgle za oknami domu' },
+      { id: 'photo-1638718260002-18bdc8082608', ar: '0.67', alt: 'Trasowanie ołówkiem miejsca cięcia na pniu' },
+      { id: 'photo-1597960194599-22929afc25b1', ar: '1.5', alt: 'Hala pracowni w porannym słońcu — tu powstawały fronty' },
+      { id: 'photo-1644358687651-464c503972fe', ar: '1.5', alt: 'Sezonowane deski jesionu w sztaplach' },
       { id: 'photo-1463082459669-fd1ca1692fea', ar: '1.5', alt: 'Szlifowanie jesionowej deski w pracowni' },
     ],
   },
@@ -87,6 +93,8 @@ const PROJECTS = {
       { id: 'photo-1593069431672-f903a33c286f', ar: '1.3', alt: 'Zabudowa z orzecha i bieli z otwartą wnęką biurka' },
       { id: 'photo-1720391793902-06a80038b1ed', ar: '0.67', alt: 'Narożnik dębowego stołu w bocznym świetle' },
       { id: 'photo-1497219055242-93359eeed651', ar: '1.85', alt: 'Dłuto prowadzone wzdłuż rysunku na desce' },
+      { id: 'photo-1590635022668-81cc8696a19d', ar: '1.5', alt: 'Próbki gatunków drewna — dobór dębu do projektu' },
+      { id: 'photo-1426927308491-6380b6a9936f', ar: '1.5', alt: 'Ściana narzędzi ręcznych w pracowni' },
       { id: 'photo-1779277301060-ca36c5afead5', ar: '1.5', alt: 'Sypialnia z meblami z ciemnego drewna' },
     ],
   },
@@ -248,9 +256,9 @@ let smoother = null;
 function createSmoother() {
   if (smoother || prefersReduced) return;
   smoother = ScrollSmoother.create({
-    smooth: 1.45,
+    smooth: 1.9,
     effects: true,
-    smoothTouch: 0.12,
+    smoothTouch: 0.15,
     normalizeScroll: true,
   });
 }
@@ -341,6 +349,7 @@ function setMenu(open) {
   menuBtn.setAttribute('aria-expanded', String(open));
   if (open) menuTl.timeScale(1).play();
   else menuTl.timeScale(1.35).reverse();
+  refreshCursorZone();
 }
 
 menuBtn.addEventListener('click', () => setMenu(!menuOpen));
@@ -349,29 +358,53 @@ window.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(fals
 
 /* ------------------------------------------------------------
    CUSTOM CURSOR — strefy sliderów
+   Strefa jest sprawdzana przez elementFromPoint także przy scrollu
+   i zmianie widoku, bo elementy uciekają spod kursora bez pointermove.
    ------------------------------------------------------------ */
 const cursor = document.querySelector('[data-cursor]');
+let refreshCursorZone = () => {};
+
 if (cursor && finePointer && !prefersReduced) {
   const xTo = gsap.quickTo(cursor, 'x', { duration: 0.35, ease: 'power3.out' });
   const yTo = gsap.quickTo(cursor, 'y', { duration: 0.35, ease: 'power3.out' });
   let visible = false;
+  let lastX = -1;
+  let lastY = -1;
+
+  const setVisible = (show) => {
+    if (show === visible) return;
+    visible = show;
+    gsap.to(cursor, {
+      opacity: show ? 1 : 0,
+      scale: show ? 1 : 0.6,
+      duration: 0.3,
+      ease: 'power3.out',
+      overwrite: 'auto',
+    });
+  };
+
+  refreshCursorZone = () => {
+    if (lastX < 0 || menuOpen) { setVisible(false); return; }
+    const el = document.elementFromPoint(lastX, lastY);
+    setVisible(Boolean(el && el.closest && el.closest('[data-cursor-zone]')));
+  };
 
   window.addEventListener('pointermove', (e) => {
-    xTo(e.clientX);
-    yTo(e.clientY);
-    const zone = e.target.closest && e.target.closest('[data-cursor-zone]');
-    const show = Boolean(zone);
-    if (show !== visible) {
-      visible = show;
-      gsap.to(cursor, {
-        opacity: show ? 1 : 0,
-        scale: show ? 1 : 0.6,
-        duration: 0.3,
-        ease: 'power3.out',
-        overwrite: 'auto',
-      });
-    }
+    lastX = e.clientX;
+    lastY = e.clientY;
+    xTo(lastX);
+    yTo(lastY);
+    refreshCursorZone();
   }, { passive: true });
+
+  document.documentElement.addEventListener('pointerleave', () => {
+    lastX = -1;
+    setVisible(false);
+  });
+
+  // smoother dowozi scroll po puszczeniu kółka — sprawdzaj strefę
+  // przez cały czas trwania przewijania
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: refreshCursorZone });
 } else if (cursor) {
   cursor.style.display = 'none';
 }
@@ -469,17 +502,19 @@ function slideTransition(outMedia, inMedia, onDone) {
     return null;
   }
 
+  const outImg = outMedia.querySelector('img');
   const tl = gsap.timeline({
-    defaults: { ease: 'power3.inOut' },
+    defaults: { ease: 'power4.inOut' },
     onComplete: () => {
       gsap.set(outMedia, { visibility: 'hidden', zIndex: 0, clipPath: 'inset(0% 0% 0% 0%)' });
+      gsap.set(outImg, { xPercent: 0, scale: 1 });
       outMedia.classList.remove('is-active');
       if (onDone) onDone();
     },
   });
-  tl.to(inMedia, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.0 }, 0.05)
-    .fromTo(inImg, { xPercent: 12, scale: 1.06 }, { xPercent: 0, scale: 1, duration: 1.35, ease: 'power3.out' }, 0.05)
-    .to(outMedia.querySelector('img'), { scale: 1.07, duration: 1.0, ease: 'power2.inOut' }, 0);
+  tl.to(inMedia, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.3 }, 0)
+    .fromTo(inImg, { xPercent: 13, scale: 1.09 }, { xPercent: 0, scale: 1, duration: 2.0, ease: 'expo.out' }, 0.12)
+    .to(outImg, { xPercent: -9, scale: 1.05, duration: 1.3 }, 0);
   return tl;
 }
 
@@ -535,12 +570,12 @@ function initHomeSlider(root) {
 
     if (!prefersReduced && tl) {
       tl.to(slides[from].querySelector('.slider__heading'), {
-        yPercent: -60, opacity: 0, duration: 0.45, ease: 'power2.in',
+        yPercent: -55, opacity: 0, duration: 0.5, ease: 'power2.in',
       }, 0);
       tl.set(slides[from].querySelector('.slider__heading'), { yPercent: 0, opacity: 1 });
       tl.fromTo(slides[index].querySelector('.slider__heading'),
-        { yPercent: 85, opacity: 0 },
-        { yPercent: 0, opacity: 1, duration: 0.65, ease: 'power3.out' }, 0.32);
+        { yPercent: 80, opacity: 0 },
+        { yPercent: 0, opacity: 1, duration: 0.95, ease: 'expo.out' }, 0.4);
     } else if (prefersReduced) {
       busy = false;
     }
@@ -571,30 +606,60 @@ function initHomeSlider(root) {
   };
 }
 
-/* --- slider ofertowy (pełna szerokość, manualny) --- */
+/* --- slider ofertowy (pełna szerokość, autoplay + klik) --- */
 function initPageSlider(root) {
   const medias = gsap.utils.toArray(root.querySelectorAll('.pslider__media'));
   const nextBtn = root.querySelector('[data-pslider-next]');
   const countEl = root.querySelector('[data-pslider-count]');
   const stage = root.querySelector('.pslider__viewport');
+  const AUTOPLAY = 5.5;
   let index = 0;
   let busy = false;
+  let timer = null;
+  let inView = false;
+  let hovering = false;
+
+  function schedule() {
+    if (timer) timer.kill();
+    if (prefersReduced || medias.length < 2) return;
+    timer = gsap.delayedCall(AUTOPLAY, () => go(index + 1));
+    if (!inView || hovering || menuOpen) timer.pause();
+  }
 
   function go(to) {
     if (busy || medias.length < 2) return;
+    if (timer) timer.kill();
     const from = index;
     index = (to + medias.length) % medias.length;
-    if (index === from) return;
+    if (index === from) { schedule(); return; }
     busy = true;
-    const tl = slideTransition(medias[from], medias[index], () => { busy = false; });
+    const tl = slideTransition(medias[from], medias[index], () => { busy = false; schedule(); });
     if (prefersReduced) busy = false;
     rollCounter(tl, countEl, pad2(index));
   }
 
   nextBtn.addEventListener('click', (e) => { e.preventDefault(); go(index + 1); });
   stage.addEventListener('click', () => go(index + 1));
+  stage.addEventListener('pointerenter', () => { hovering = true; if (timer) timer.pause(); });
+  stage.addEventListener('pointerleave', () => { hovering = false; if (timer && inView && !menuOpen) timer.resume(); });
+
+  const st = ScrollTrigger.create({
+    trigger: root,
+    start: 'top 90%',
+    end: 'bottom 10%',
+    onToggle: (self) => {
+      inView = self.isActive;
+      if (!timer) return;
+      if (inView && !hovering && !menuOpen) timer.resume();
+      else timer.pause();
+    },
+  });
+
+  schedule();
 
   return () => {
+    if (timer) timer.kill();
+    st.kill();
     gsap.killTweensOf([...medias, ...medias.map((m) => m.querySelector('img')), countEl]);
   };
 }
@@ -613,9 +678,10 @@ function initGallery(root) {
     scrollTrigger: {
       trigger: root,
       start: 'top 96px',
-      end: () => '+=' + dist(),
+      // dłuższy dystans pionowy niż poziomy = wolniejsze, spokojniejsze tempo
+      end: () => '+=' + Math.round(dist() * 1.35),
       pin: true,
-      scrub: 1.4,
+      scrub: 2.2,
       invalidateOnRefresh: true,
       anticipatePin: 1,
     },
@@ -727,12 +793,16 @@ function projectViewHTML(slug) {
         </div>
         ${items}
         <div class="hgallery__item hgallery__item--end" data-gallery-item>
-          <span class="hgallery__end-label">Dalej</span>
+          <span class="hgallery__end-label">Następny projekt</span>
           <a class="hgallery__end-next" href="#/projekt/${p.next}">
             <span data-roll>${next.title}</span>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.2"/></svg>
           </a>
-          <a class="hgallery__end-home" href="#/" data-roll>← Strona główna</a>
+          <span class="hgallery__end-label hgallery__end-label--second">albo</span>
+          <a class="hgallery__end-next hgallery__end-next--home" href="#/">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12H4M10 5l-7 7 7 7" stroke="currentColor" stroke-width="1.2"/></svg>
+            <span data-roll>Strona główna</span>
+          </a>
         </div>
       </div>
     </section>
@@ -963,6 +1033,8 @@ function mountView(route) {
   document.title = route.type === 'home'
     ? 'Grabowski — Pracownia Stolarska | Kuchnie, zabudowy i meble na wymiar'
     : `${routeTitle(route)} — Grabowski, Pracownia Stolarska`;
+
+  refreshCursorZone();
 
   viewCtx = gsap.context(() => {
     if (route.type === 'home') {

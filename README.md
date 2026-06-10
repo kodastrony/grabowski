@@ -34,11 +34,12 @@ albo po prostu otwórz `index.html` (animacje działają też z `file://`).
   (clip-path), reset scrolla, podmiana tytułu karty i etykiety w headerze,
   przycisk „← Wstecz" na podstronach
 - **Strony ofertowe** — wielki nagłówek (maskowane linie), pełnoszerokościowy
-  slider z rolowanym licznikiem 01 — 04 i kursorem-strzałką, statement,
-  zakres, siatka realizacji
+  slider z rolowanym licznikiem 01 — 04, kursorem-strzałką i autoplayem
+  (pauza na hover / poza viewportem), statement, zakres, siatka realizacji
 - **Strony projektów** — opis + credits jako pierwszy kafel **poziomej
   galerii pinowanej do ekranu i scrubowanej pionowym scrollem**
-  (jak na inspiracji), metryka projektu, link „Następny projekt"
+  (7–8 zdjęć, zwolnione tempo 1.35×), na końcu kafel nawigacyjny
+  z dużymi linkami „Następny projekt" i „Strona główna", metryka projektu
 - **Intro** — znak logo (zazębiające się grzebienie = złącze stolarskie)
   składa się z dwóch stron, potem plansza wyjeżdża do góry
 - **Smooth scroll + parallax** — ScrollSmoother, zdjęcia z `data-speed="auto"`
