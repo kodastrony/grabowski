@@ -9,6 +9,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Wymuś runtime Node 24 dla samych akcji JS (checkout, deploy-pages itd.),
+# które domyślnie biegną jeszcze na Node 20 do 16.06.2026. To jest opt-in
+# zalecany wprost przez ostrzeżenie deprecacji Node 20 w GitHub Actions.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Uprawnienia wymagane do publikacji na Pages
 permissions:
   contents: read
