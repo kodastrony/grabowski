@@ -38,8 +38,9 @@ albo po prostu otwórz `index.html` (animacje działają też z `file://`).
   statement, zakres, siatka realizacji
 - **Strony projektów** — opis + credits jako pierwszy kafel **poziomej
   galerii pinowanej do ekranu i scrubowanej pionowym scrollem**
-  (7–8 zdjęć, zwolnione tempo 1.35×), na końcu kafel nawigacyjny
-  z dużymi linkami „Następny projekt" i „Strona główna", metryka projektu
+  (7–8 zdjęć, zwolnione tempo 1.35×; na ekranach dotykowych i wąskich
+  galeria przechodzi w pionowy, statyczny układ), metryka projektu oraz
+  dostępna sekcja „Następny projekt / Strona główna" pod galerią
 - **Intro** — znak logo (zazębiające się grzebienie = złącze stolarskie)
   składa się z dwóch stron, potem plansza wyjeżdża do góry
 - **Smooth scroll + parallax** — ScrollSmoother, zdjęcia z `data-speed="auto"`
@@ -58,8 +59,39 @@ albo po prostu otwórz `index.html` (animacje działają też z `file://`).
 - Home: hero, slider, statement, aktualności, oferta (teasery → podstrony),
   proces 01–04, materiał, realizacje (→ projekty), cytat, karty, footer
 
-Treści podstron (oferty, projekty) siedzą w `js/main.js` w obiektach
-`OFFERS` i `PROJECTS` — łatwo podmienić teksty i zdjęcia w jednym miejscu.
+Treści podstron (oferty, projekty, strony prawne) siedzą w `js/main.js`
+w obiektach `OFFERS`, `PROJECTS`, `PAGES` i `LEGAL` — łatwo podmienić
+teksty i zdjęcia w jednym miejscu.
+
+## Struktura plików
+
+```
+index.html          strona (statyczny home + kontener podstron SPA)
+css/style.css        style + design-tokeny
+js/main.js           routing, animacje, dane treści
+404.html             markowa strona błędu (GitHub Pages)
+robots.txt           indeksowanie + wskazanie sitemap
+sitemap.xml          kanoniczny URL strony
+site.webmanifest     PWA (nazwa, kolory, ikony)
+assets/              apple-touch-icon + ikony 192/512 (znak marki)
+```
+
+## Gotowość do publikacji
+
+- **Dostępność (WCAG 2.2 AA):** widoczny fokus klawiatury (`:focus-visible`
+  na wszystkim, wyciszony dla myszy), kontrast tekstu pomocniczego ≥ 5,2:1,
+  menu jako prawdziwy modal (`inert` + pułapka fokusu + powrót fokusu),
+  skip-link, slider z przyciskami prev/next i `aria-live`, `aria-current`
+  w menu, komunikat formularza jako `role="status"`, pełne `prefers-reduced-motion`
+- **Wydajność:** `preconnect`/`dns-prefetch` do CDN-ów, `defer` na skryptach,
+  `preload` obrazu LCP, mniejsze warianty obrazów (≤ 1600 px), `will-change`
+  tylko na hover, a na słabych urządzeniach (≤ 4 rdzenie/4 GB lub Save-Data)
+  ScrollSmoother i przejmowanie scrolla są wyłączane (natywny scroll)
+- **SEO / social:** `canonical`, komplet Open Graph + Twitter Card,
+  dane strukturalne JSON-LD (`HomeAndConstructionBusiness`), `robots.txt`,
+  `sitemap.xml`, `site.webmanifest`, apple-touch-icon
+- **Formularz / RODO:** dostępna walidacja po polsku, pole zgody z `name`,
+  link do polityki prywatności; strony `#/polityka-prywatnosci` i `#/regulamin`
 
 ## Zachowania brzegowe
 
@@ -69,7 +101,12 @@ Treści podstron (oferty, projekty) siedzą w `js/main.js` w obiektach
   ScrollSmoother dopina się przy pierwszym pokazaniu karty
 - `?anim=1` w URL — wymusza pełne animacje mimo ukrytej karty
   (testy automatyczne, nagrania)
-- Brak GSAP (padnięty CDN) — strona w pełni czytelna bez animacji
+- Słabe urządzenie / Save-Data — ScrollSmoother pomijany, natywny scroll
+  (ekrany dotykowe nie mają przejmowania scrolla — zero janku)
+- Wolne/zablokowane fonty — intro odpala się po max 1,5 s (timeout zamiast
+  zawisu za nieprzezroczystą planszą)
+- Brak GSAP lub któregoś pluginu (padnięty CDN) — klasa `.js` nie jest
+  dodawana, strona pozostaje w pełni czytelna bez animacji
 
 ## Uwaga techniczna (lekcja z debugowania)
 

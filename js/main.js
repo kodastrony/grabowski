@@ -4,15 +4,21 @@
    Animacje: GSAP + ScrollTrigger + ScrollSmoother + SplitText
    ============================================================ */
 
-if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-  // CDN niedostępny — strona działa bez animacji (brak klasy .js = wszystko widoczne)
-  throw new Error('GSAP nie został załadowany — pomijam animacje.');
+if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' ||
+    typeof ScrollSmoother === 'undefined' || typeof SplitText === 'undefined') {
+  // CDN/plugin niedostępny — strona działa bez animacji (brak klasy .js = wszystko widoczne)
+  throw new Error('GSAP lub jego pluginy nie zostały załadowane — pomijam animacje.');
 }
-
-document.documentElement.classList.add('js');
 
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+// Słabe urządzenie / data-saver: rezygnujemy z ciężkiego smooth-scrolla,
+// bo normalizeScroll + smoothTouch to główne źródło janku na low-endzie.
+const lowPower = Boolean(
+  (navigator.connection && navigator.connection.saveData) ||
+  (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+  (navigator.deviceMemory && navigator.deviceMemory <= 4)
+);
 // Karta otwarta w tle (np. ctrl+klik): bootujemy od razu w stanie końcowym,
 // bo rAF nie tyka — intro i odsłony zostałyby zamrożone.
 // ?anim=1 wymusza pełne animacje (testy / nagrania).
@@ -20,7 +26,14 @@ const startHidden = document.visibilityState === 'hidden';
 const forceAnim = /[?&]anim=1/.test(location.search);
 const instantBoot = prefersReduced || (startHidden && !forceAnim);
 
-gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
+// Rejestracja pluginów PRZED dodaniem klasy .js — gdyby któryś zawiódł,
+// strona zostaje w czytelnym stanie bez animacji (zamiast utknąć w stanach startowych).
+try {
+  gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
+} catch (e) {
+  throw new Error('Rejestracja pluginów GSAP nie powiodła się — pomijam animacje.');
+}
+document.documentElement.classList.add('js');
 
 /* ------------------------------------------------------------
    OBRAZKI — srcset + lazy loading
@@ -28,14 +41,17 @@ gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
 const UNSPLASH = 'https://images.unsplash.com/';
 
 function imgTag(id, alt, opts = {}) {
-  const widths = opts.widths || [600, 900, 1400, 2000];
+  // 1600w jako górny pułap retiny — 2000w nie wygrywał w żadnym slocie layoutu
+  const widths = opts.widths || [600, 900, 1400, 1600];
   const sizes = opts.sizes || '(max-width: 900px) 100vw, 70vw';
   const srcset = widths.map((w) => `${UNSPLASH}${id}?w=${w}&q=70&auto=format&fit=crop ${w}w`).join(', ');
   const src = `${UNSPLASH}${id}?w=${widths[widths.length - 2]}&q=70&auto=format&fit=crop`;
   const eager = opts.eager
     ? ' fetchpriority="high"'
     : ' loading="lazy" decoding="async"';
-  return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${alt}"${eager}${opts.speed ? ` data-speed="${opts.speed}"` : ''}>`;
+  // gdy zdjęcie Unsplash padnie — chowamy glif, kontener trzyma się aspect-ratio
+  const onerror = ' onerror="this.style.opacity=0;var f=this.closest(\'figure\');if(f)f.classList.add(\'img-failed\')"';
+  return `<img src="${src}" srcset="${srcset}" sizes="${sizes}" alt="${alt}"${eager}${onerror}${opts.speed ? ` data-speed="${opts.speed}"` : ''}>`;
 }
 
 /* ------------------------------------------------------------
@@ -255,12 +271,12 @@ buildRolls(document);
 let smoother = null;
 
 function createSmoother() {
-  if (smoother || prefersReduced) return;
+  if (smoother || prefersReduced || lowPower) return;
   smoother = ScrollSmoother.create({
     smooth: 1.9,
     effects: true,
-    smoothTouch: 0.15,
-    normalizeScroll: true,
+    smoothTouch: false,           // touch = natywny scroll, bez przejmowania gestu
+    normalizeScroll: finePointer, // hijack scrolla tylko na desktopie (mysz/trackpad)
   });
 }
 
@@ -329,6 +345,10 @@ function swapLabel(text) {
 const menuEl = document.querySelector('[data-menu]');
 const menuBtn = document.querySelector('[data-menu-toggle]');
 const backdrop = document.querySelector('[data-menu-backdrop]');
+const smoothWrapper = document.querySelector('#smooth-wrapper');
+const brandEl = document.querySelector('.brand');
+// tło, które przy otwartym menu ma zniknąć z drzewa fokusu i AT (toggle zostaje)
+const menuBgInert = [smoothWrapper, brandEl, backBtn].filter(Boolean);
 let menuOpen = false;
 
 gsap.set(menuEl, { yPercent: -101 });
@@ -342,21 +362,56 @@ menuTl
   .from(menuEl.querySelectorAll('.menu__col'), {
     y: 28, opacity: 0, duration: 0.6, stagger: 0.07, ease: 'power3.out',
   }, 0.28);
+// po zamknięciu chowamy menu z drzewa fokusu — samo zsunięcie (yPercent)
+// zostawia linki visibility:visible, więc Tab wciąż by je łapał poza ekranem
+menuTl.eventCallback('onReverseComplete', () => {
+  gsap.set(menuEl, { visibility: 'hidden' });
+  gsap.set(backdrop, { visibility: 'hidden' });
+});
+
+function menuFocusables() {
+  return [menuBtn, ...menuEl.querySelectorAll('a[href]')];
+}
 
 function setMenu(open) {
   if (open === menuOpen) return;
   menuOpen = open;
   document.body.classList.toggle('menu-open', open);
   menuBtn.setAttribute('aria-expanded', String(open));
-  if (open) menuTl.timeScale(1).play();
-  else menuTl.timeScale(1.35).reverse();
+  menuBtn.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu');
+  if (open) {
+    gsap.set(menuEl, { visibility: 'visible' }); // zanim ustawimy fokus
+    menuEl.inert = false; // linki menu muszą być fokusowalne
+    menuTl.timeScale(1).play();
+    menuBgInert.forEach((el) => { el.inert = true; el.setAttribute('aria-hidden', 'true'); });
+    const firstLink = menuEl.querySelector('.menu__list a');
+    if (firstLink) firstLink.focus({ preventScroll: true });
+  } else {
+    menuTl.timeScale(1.35).reverse();
+    menuBgInert.forEach((el) => { el.inert = false; el.removeAttribute('aria-hidden'); });
+    // oddaj fokus do przycisku (zanim wyłączymy menu), jeśli był wewnątrz menu
+    if (document.activeElement && menuEl.contains(document.activeElement)) {
+      menuBtn.focus({ preventScroll: true });
+    }
+    // wyklucz linki z tab-order już na czas zsuwania — nie czekaj na onReverseComplete
+    menuEl.inert = true;
+  }
   refreshCursorZone();
   window.dispatchEvent(new Event('menu-toggle'));
 }
 
 menuBtn.addEventListener('click', () => setMenu(!menuOpen));
 backdrop.addEventListener('click', () => setMenu(false));
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { setMenu(false); return; }
+  // pułapka Tab: krąży między przyciskiem (Zamknij) a linkami menu
+  if (e.key !== 'Tab' || !menuOpen) return;
+  const f = menuFocusables();
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
 
 /* ------------------------------------------------------------
    CUSTOM CURSOR — strefy sliderów
@@ -367,6 +422,7 @@ const cursor = document.querySelector('[data-cursor]');
 let refreshCursorZone = () => {};
 
 if (cursor && finePointer && !prefersReduced) {
+  document.body.classList.add('has-custom-cursor');
   const xTo = gsap.quickTo(cursor, 'x', { duration: 0.35, ease: 'power3.out' });
   const yTo = gsap.quickTo(cursor, 'y', { duration: 0.35, ease: 'power3.out' });
   let visible = false;
@@ -515,8 +571,10 @@ function initHomeSlider(root) {
   const medias = gsap.utils.toArray(root.querySelectorAll('.slider__media'));
   const imgs = medias.map((m) => m.querySelector('img'));
   const nextBtn = root.querySelector('[data-slider-next]');
+  const prevBtn = root.querySelector('[data-slider-prev]');
   const countEl = root.querySelector('[data-slider-count]');
   const progressEl = root.querySelector('[data-slider-progress]');
+  const liveEl = root.querySelector('[data-slider-live]');
   const stage = root.querySelector('.slider__stage');
 
   const AUTOPLAY = 6;
@@ -570,6 +628,7 @@ function initHomeSlider(root) {
       });
     }
     rollCounterTo(countEl, pad2(idx));
+    if (liveEl) liveEl.textContent = `Slajd ${idx + 1} z ${len}`;
   }
 
   function go(step) {
@@ -608,13 +667,18 @@ function initHomeSlider(root) {
     syncProgress();
   }
 
-  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(1); });
-  stage.addEventListener('click', () => go(1));
-  stage.addEventListener('pointerenter', () => { hovering = true; syncProgress(); });
-  stage.addEventListener('pointerleave', () => { hovering = false; syncProgress(); });
+  // jeden AbortController zdejmuje wszystkie listenery przy odmontowaniu widoku
+  // (home wraca na scenę przy powrotnej nawigacji — bez tego listenery by się mnożyły)
+  const ac = new AbortController();
+  const sig = { signal: ac.signal };
+  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(1); }, sig);
+  if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(-1); }, sig);
+  stage.addEventListener('click', () => go(1), sig);
+  stage.addEventListener('pointerenter', () => { hovering = true; syncProgress(); }, sig);
+  stage.addEventListener('pointerleave', () => { hovering = false; syncProgress(); }, sig);
 
   const onMenuToggle = () => syncProgress();
-  window.addEventListener('menu-toggle', onMenuToggle);
+  window.addEventListener('menu-toggle', onMenuToggle, sig);
 
   const st = ScrollTrigger.create({
     trigger: root,
@@ -626,10 +690,10 @@ function initHomeSlider(root) {
   syncProgress();
 
   return () => {
+    ac.abort();
     if (progress) progress.kill();
     if (moveTween) moveTween.kill();
     st.kill();
-    window.removeEventListener('menu-toggle', onMenuToggle);
     gsap.killTweensOf([progressEl, ...medias, ...imgs, ...slides.flatMap((s) => [...s.querySelectorAll('.slider__heading, .slider__desc')]), countEl]);
   };
 }
@@ -637,7 +701,11 @@ function initHomeSlider(root) {
 /* --- pozioma galeria (pin + scrub) — projekty i strony ofertowe --- */
 function initGallery(root) {
   const track = root.querySelector('.hgallery__track');
-  if (instantBoot) {
+  // touch / wąskie ekrany dostają pionowy układ statyczny — przypięty scrub
+  // poziomy pod normalizeScroll to znane źródło zacięć na telefonie
+  const touchOrNarrow = window.matchMedia('(hover: none), (pointer: coarse)').matches
+    || window.innerWidth < 768;
+  if (instantBoot || touchOrNarrow) {
     root.classList.add('hgallery--static');
     return () => {};
   }
@@ -669,24 +737,45 @@ function initGallery(root) {
 function initContactForm(root) {
   const form = root.querySelector('[data-form]');
   if (!form) return () => {};
+  const ac = new AbortController();
+  const sig = { signal: ac.signal };
+
+  // polskie, czytelne komunikaty walidacji (zamiast domyślnych przeglądarki)
+  form.querySelectorAll('input, select, textarea').forEach((el) => {
+    el.addEventListener('input', () => el.setCustomValidity(''), sig);
+    el.addEventListener('invalid', () => {
+      if (el.validity.valueMissing) {
+        el.setCustomValidity(el.type === 'checkbox'
+          ? 'Zaznacz zgodę, aby wysłać zapytanie.'
+          : 'To pole jest wymagane.');
+      } else if (el.validity.typeMismatch && el.type === 'email') {
+        el.setCustomValidity('Podaj poprawny adres e-mail, np. jan@dom.pl.');
+      } else {
+        el.setCustomValidity('');
+      }
+    }, sig);
+  });
+
   const onSubmit = (e) => {
     e.preventDefault();
     if (!form.reportValidity()) return;
     const fields = form.querySelector('.form__fields');
     const success = form.querySelector('.form__success');
+    // role="status" ogłosi treść; preventScroll, by nie walczyć ze smootherem
+    const reveal = () => { success.hidden = false; success.focus({ preventScroll: true }); };
     if (instantBoot) {
       fields.style.display = 'none';
-      success.hidden = false;
+      reveal();
       return;
     }
     gsap.timeline()
       .to(fields, { opacity: 0, y: -18, duration: 0.45, ease: 'power2.in' })
       .set(fields, { display: 'none' })
-      .set(success, { hidden: false })
+      .add(reveal)
       .from(success.children, { y: 26, opacity: 0, duration: 0.7, stagger: 0.08, ease: 'power3.out' });
   };
-  form.addEventListener('submit', onSubmit);
-  return () => form.removeEventListener('submit', onSubmit);
+  form.addEventListener('submit', onSubmit, sig);
+  return () => ac.abort();
 }
 
 /* ------------------------------------------------------------
@@ -758,18 +847,6 @@ function projectViewHTML(slug) {
           <p class="hgallery__credits">${p.credits}</p>
         </div>
         ${items}
-        <div class="hgallery__item hgallery__item--end" data-gallery-item>
-          <span class="hgallery__end-label">Następny projekt</span>
-          <a class="hgallery__end-next" href="#/projekt/${p.next}">
-            <span data-roll>${next.title}</span>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.2"/></svg>
-          </a>
-          <span class="hgallery__end-label hgallery__end-label--second">albo</span>
-          <a class="hgallery__end-next hgallery__end-next--home" href="#/">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12H4M10 5l-7 7 7 7" stroke="currentColor" stroke-width="1.2"/></svg>
-            <span data-roll>Strona główna</span>
-          </a>
-        </div>
       </div>
     </section>
     <section class="pmeta container">
@@ -779,6 +856,14 @@ function projectViewHTML(slug) {
         <div class="pmeta__cell"><span class="pmeta__label">Rok</span>${p.year}</div>
         <div class="pmeta__cell"><span class="pmeta__label">Zakres</span>${p.scope}</div>
       </div>
+    </section>
+    <section class="pnext container" data-reveal aria-label="Dalej">
+      <span class="pnext__label">Następny projekt</span>
+      <a class="pnext__link" href="#/projekt/${p.next}">
+        <span data-roll>${next.title}</span>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.2"/></svg>
+      </a>
+      <p class="pnext__home"><a class="card__link" href="#/" data-roll>albo wróć na stronę główną&nbsp;→</a></p>
     </section>`;
 }
 
@@ -850,7 +935,7 @@ function pracowniaViewHTML() {
         <span class="pnext__label">Zobacz na żywo</span><br>
         <a class="pnext__link" href="#/kontakt">
           <span data-roll>Umów wizytę w pracowni</span>
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.2"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.2"/></svg>
         </a>
       </div>
     </section>`;
@@ -908,17 +993,18 @@ function kontaktViewHTML() {
                 <textarea name="message" rows="4" placeholder="Opowiedz krótko o swoim wnętrzu…"></textarea>
               </label>
               <label class="form__check form__check--consent">
-                <input type="checkbox" required>
+                <input type="checkbox" name="consent" value="yes" required>
                 <span>Zgadzam się na kontakt w sprawie mojego zapytania.</span>
               </label>
+              <p class="form__note form__note--consent">Dane przetwarzamy zgodnie z <a href="#/polityka-prywatnosci" data-roll>polityką prywatności</a>.</p>
               <div class="form__actions">
                 <button class="btn" type="submit">Wyślij zapytanie
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.6"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 12h17M14 5l7 7-7 7" stroke="currentColor" stroke-width="1.6"/></svg>
                 </button>
                 <span class="form__note">Formularz demonstracyjny — wiadomość nie zostanie wysłana.</span>
               </div>
             </div>
-            <div class="form__success" hidden>
+            <div class="form__success" role="status" tabindex="-1" hidden>
               <h3 class="card__title">Dziękujemy!</h3>
               <p class="card__text">Odezwiemy się w ciągu jednego dnia roboczego, żeby umówić dogodny termin.</p>
             </div>
@@ -933,6 +1019,52 @@ function kontaktViewHTML() {
 }
 
 /* ------------------------------------------------------------
+   STRONY PRAWNE (RODO / regulamin)
+   ------------------------------------------------------------ */
+const LEGAL = {
+  'polityka-prywatnosci': {
+    label: 'Polityka prywatności',
+    titleLines: ['Polityka', 'prywatności'],
+    intro: 'Szanujemy Twoją prywatność. Poniżej w skrócie wyjaśniamy, jakie dane zbieramy przez formularz kontaktowy i co się z nimi dzieje.',
+    blocks: [
+      { h: 'Administrator danych', body: '<p>Administratorem danych jest Pracownia Stolarska Grabowski, ul. Dębowa 12, 05-822 Milanówek. W sprawach dotyczących danych napisz na <a class="footer__contact-link" href="mailto:pracownia@grabowski.studio">pracownia@grabowski.studio</a>.</p>' },
+      { h: 'Jakie dane i po co', body: '<p>Z formularza zbieramy imię i nazwisko, adres e-mail oraz treść wiadomości — wyłącznie po to, by odpowiedzieć na Twoje zapytanie i umówić rozmowę. Nie wykorzystujemy ich do marketingu ani profilowania.</p>' },
+      { h: 'Podstawa i czas przechowywania', body: '<p>Podstawą przetwarzania jest Twoja zgoda (art. 6 ust. 1 lit. a RODO). Dane przechowujemy do czasu zakończenia korespondencji lub cofnięcia zgody, nie dłużej niż 24 miesiące.</p>' },
+      { h: 'Twoje prawa', body: '<p>Masz prawo dostępu do danych, ich sprostowania i usunięcia, ograniczenia przetwarzania oraz cofnięcia zgody w dowolnym momencie. Przysługuje Ci też skarga do Prezesa UODO.</p>' },
+      { h: 'Uwaga', body: '<p>To strona demonstracyjna (portfolio). Formularz nie wysyła wiadomości, a marka „Grabowski” jest fikcyjna — dane kontaktowe służą wyłącznie prezentacji.</p>' },
+    ],
+  },
+  regulamin: {
+    label: 'Regulamin',
+    titleLines: ['Regulamin', 'serwisu'],
+    intro: 'Krótkie zasady korzystania z tej strony. Serwis ma charakter informacyjny i portfolio — nie prowadzimy tu sprzedaży online.',
+    blocks: [
+      { h: 'Charakter serwisu', body: '<p>Strona prezentuje ofertę i realizacje pracowni. Treści mają charakter informacyjny i nie stanowią oferty w rozumieniu Kodeksu cywilnego.</p>' },
+      { h: 'Kontakt i wyceny', body: '<p>Zapytania składasz przez formularz lub bezpośrednio mailem/telefonicznie. Każdą wycenę ustalamy indywidualnie po rozmowie i pomiarze.</p>' },
+      { h: 'Prawa autorskie', body: '<p>Treści, marka i kod strony są chronione prawem autorskim. Zdjęcia pochodzą z serwisu Unsplash (licencja Unsplash). Projekt i realizacja: KODA.</p>' },
+      { h: 'Uwaga', body: '<p>To strona demonstracyjna (portfolio). Marka „Grabowski” jest fikcyjna, a regulamin ma charakter poglądowy.</p>' },
+    ],
+  },
+};
+
+function legalViewHTML(slug) {
+  const d = LEGAL[slug];
+  const blocks = d.blocks.map((b) => `
+    <div class="legal__block" data-reveal>
+      <h2 class="legal__h">${b.h}</h2>
+      <div class="legal__body">${b.body}</div>
+    </div>`).join('');
+  return `
+    ${pageHeroHTML(d.titleLines)}
+    <section class="statement container">
+      <p class="statement__text statement__text--sm" data-lines>${d.intro}</p>
+    </section>
+    <section class="page-section container">
+      <div class="legal">${blocks}</div>
+    </section>`;
+}
+
+/* ------------------------------------------------------------
    ROUTER
    ------------------------------------------------------------ */
 let viewCtx = null;
@@ -940,8 +1072,10 @@ let pageEffects = [];
 let routeBusy = false;
 let pendingRoute = null;
 let currentRoute = { type: 'init' };
+let targetRoute = null; // trasa, do której właśnie lecimy (kurtyna w toku)
 let pendingScroll = null;
 let heroSplit = null;
+let pageTitleSplit = null;
 
 function parseRoute(hash) {
   const h = hash || location.hash || '#/';
@@ -949,8 +1083,13 @@ function parseRoute(hash) {
   if (m && OFFERS[m[1]]) return { type: 'offer', slug: m[1] };
   m = h.match(/^#\/projekt\/([a-z-]+)/);
   if (m && PROJECTS[m[1]]) return { type: 'project', slug: m[1] };
-  m = h.match(/^#\/(filozofia|pracownia|kontakt)/);
+  m = h.match(/^#\/(filozofia|pracownia|kontakt|polityka-prywatnosci|regulamin)/);
   if (m) return { type: 'page', slug: m[1] };
+  // nieznany hash → home; gdy czytamy żywą lokację (bez argumentu), prostujemy
+  // URL na #/ bez dorzucania wpisu do historii
+  if (!hash && h !== '#/' && h !== '' && h !== '#') {
+    history.replaceState(null, '', location.pathname + location.search + '#/');
+  }
   return { type: 'home' };
 }
 
@@ -959,7 +1098,7 @@ const sameRoute = (a, b) => a.type === b.type && a.slug === b.slug;
 function routeTitle(route) {
   if (route.type === 'offer') return OFFERS[route.slug].label;
   if (route.type === 'project') return PROJECTS[route.slug].title;
-  if (route.type === 'page') return PAGES[route.slug].label;
+  if (route.type === 'page') return (PAGES[route.slug] || LEGAL[route.slug]).label;
   return 'Strona główna';
 }
 
@@ -969,12 +1108,17 @@ function cleanupView() {
   if (viewCtx) { viewCtx.revert(); viewCtx = null; }
   pageEffects.forEach((t) => t && t.kill && t.kill());
   pageEffects = [];
+  // SplitText tytułu podstrony żyje poza viewCtx — rewertujemy ręcznie,
+  // by autoSplit nie zostawił osieroconego obserwatora na usuwanym węźle
+  if (pageTitleSplit) { pageTitleSplit.revert(); pageTitleSplit = null; }
 }
 
 const PAGE_BUILDERS = {
   filozofia: filozofiaViewHTML,
   pracownia: pracowniaViewHTML,
   kontakt: kontaktViewHTML,
+  'polityka-prywatnosci': () => legalViewHTML('polityka-prywatnosci'),
+  regulamin: () => legalViewHTML('regulamin'),
 };
 
 function mountView(route) {
@@ -1001,6 +1145,16 @@ function mountView(route) {
   document.title = route.type === 'home'
     ? 'Grabowski — Pracownia Stolarska | Kuchnie, zabudowy i meble na wymiar'
     : `${routeTitle(route)} — Grabowski, Pracownia Stolarska`;
+
+  // aria-current na linku menu odpowiadającym aktywnej trasie
+  menuEl.querySelectorAll('a[aria-current]').forEach((a) => a.removeAttribute('aria-current'));
+  if (route.slug) {
+    const sel = route.type === 'offer'
+      ? `a[href="#/oferta/${route.slug}"]`
+      : `a[href="#/${route.slug}"]`;
+    const curLink = menuEl.querySelector(sel);
+    if (curLink) curLink.setAttribute('aria-current', 'page');
+  }
 
   refreshCursorZone();
 
@@ -1056,8 +1210,8 @@ function enterView(route) {
     }, 0.1);
   } else {
     const title = pageView.querySelector('[data-page-title]');
-    const split = new SplitText(title, { type: 'lines', mask: 'lines', autoSplit: true });
-    tl.from(split.lines, { yPercent: 112, duration: 1.1, stagger: 0.1, ease: 'power4.out' }, 0.05);
+    pageTitleSplit = new SplitText(title, { type: 'lines', mask: 'lines', autoSplit: true });
+    tl.from(pageTitleSplit.lines, { yPercent: 112, duration: 1.1, stagger: 0.1, ease: 'power4.out' }, 0.05);
     const gItems = pageView.querySelectorAll('[data-gallery-item]');
     if (gItems.length) {
       tl.from(gItems, { x: 90, opacity: 0, duration: 1.1, stagger: 0.08, ease: 'power3.out' }, 0.4);
@@ -1071,8 +1225,13 @@ function enterView(route) {
 
 /* przejście z kurtyną */
 function transitionTo(route) {
-  if (routeBusy) { pendingRoute = route; return; }
+  if (routeBusy) {
+    // już lecimy do tej trasy → ignoruj; inna → zakolejkuj
+    if (!sameRoute(route, targetRoute)) pendingRoute = route;
+    return;
+  }
   routeBusy = true;
+  targetRoute = route;
   setMenu(false);
 
   const finish = () => {
@@ -1113,7 +1272,14 @@ function transitionTo(route) {
 
 window.addEventListener('hashchange', () => {
   const route = parseRoute();
-  if (sameRoute(route, currentRoute)) return;
+  // w trakcie kurtyny porównujemy z trasą docelową, nie z wychodzącą
+  const ref = routeBusy ? targetRoute : currentRoute;
+  if (ref && sameRoute(route, ref)) {
+    // wracamy do trasy „w locie", a zakolejkowana jest inna i nieaktualna —
+    // wyczyść ją, by po finish() widok i hash się nie rozjechały (wyścig A→B→A)
+    if (routeBusy && pendingRoute && !sameRoute(pendingRoute, targetRoute)) pendingRoute = null;
+    return;
+  }
   transitionTo(route);
 });
 
@@ -1126,8 +1292,9 @@ document.addEventListener('click', (e) => {
   const href = a.getAttribute('href');
   if (href.startsWith('#/')) {
     setMenu(false);
-    // klik w logo / link bieżącej trasy = płynnie na górę strony
-    if (sameRoute(parseRoute(href), currentRoute)) {
+    // klik w logo / link bieżącej (lub właśnie ładowanej) trasy = płynnie na górę
+    const ref = routeBusy ? targetRoute : currentRoute;
+    if (ref && sameRoute(parseRoute(href), ref)) {
       e.preventDefault();
       if (smoother) gsap.to(smoother, { scrollTop: 0, duration: 1.1, ease: 'power3.inOut' });
       else window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
@@ -1150,6 +1317,23 @@ const toTopBtn = document.querySelector('[data-to-top]');
 if (toTopBtn) {
   toTopBtn.addEventListener('click', () => {
     if (smoother) gsap.to(smoother, { scrollTop: 0, duration: 1.2, ease: 'power3.inOut' });
+    else window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
+  });
+}
+
+// Skip link — ScrollSmoother połyka natywny skok do #top, więc robimy to ręcznie
+// i przenosimy fokus na treść (stopPropagation, by globalny handler nie zadziałał dwa razy)
+const skipLink = document.querySelector('[data-skip]');
+if (skipLink) {
+  skipLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // w trakcie intro #top jest w inertowanym #smooth-wrapper — fokus by nie zadziałał;
+    // guard sam się dezaktywuje, gdy plansza intro zniknie z DOM
+    if (document.querySelector('[data-intro]')) return;
+    const main = document.getElementById('top');
+    if (main) main.focus({ preventScroll: true });
+    if (smoother) gsap.to(smoother, { scrollTop: 0, duration: 0.6, ease: 'power3.inOut' });
     else window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
   });
 }
@@ -1179,15 +1363,24 @@ if (instantBoot) {
   if (smoother) smoother.paused(true);
   mountView(initialRoute);
 
+  // na czas intro chowamy treść i header z drzewa fokusu (overlay je zasłania)
+  if (smoothWrapper) smoothWrapper.inert = true;
+  header.inert = true;
+
   const left = intro.querySelector('[data-mark-left]');
   const right = intro.querySelector('[data-mark-right]');
   const word = intro.querySelector('.intro__word');
   const sub = intro.querySelector('.intro__sub');
 
-  document.fonts.ready.then(() => {
+  let booted = false;
+  const runIntro = () => {
+    if (booted) return; // race nie anuluje wolniejszej obietnicy — wpuszczamy raz
+    booted = true;
     gsap.timeline({
       onComplete: () => {
         intro.remove();
+        if (smoothWrapper) smoothWrapper.inert = false;
+        header.inert = false;
         if (smoother) smoother.paused(false);
         ScrollTrigger.refresh();
       },
@@ -1199,7 +1392,12 @@ if (instantBoot) {
       .to(intro, { yPercent: -100, duration: 1.0, ease: 'power4.inOut', delay: 0.55 })
       .to(header, { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.5')
       .add(enterView(initialRoute), '-=0.75');
-  });
+  };
+
+  // czekamy na fonty, ale max 1.5 s — inaczej wolny gstatic zostawiłby
+  // użytkownika za nieprzezroczystą planszą intro z wstrzymanym scrollem
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  Promise.race([fontsReady, new Promise((r) => setTimeout(r, 1500))]).then(runIntro);
 }
 
 window.addEventListener('load', () => ScrollTrigger.refresh());

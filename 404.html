@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nie znaleziono strony — Grabowski, Pracownia Stolarska</title>
+  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#DDDAD5">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23DDDAD5'/%3E%3Cg fill='%231E1E1E'%3E%3Crect x='12' y='8' width='8' height='48'/%3E%3Crect x='20' y='8' width='18' height='9'/%3E%3Crect x='20' y='26' width='18' height='9'/%3E%3Crect x='20' y='44' width='18' height='9'/%3E%3Crect x='44' y='8' width='8' height='48'/%3E%3Crect x='28' y='17' width='16' height='9'/%3E%3Crect x='28' y='35' width='16' height='9'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #DDDAD5;
+      color: #1E1E1E;
+      font-family: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: clamp(1.5rem, 5vw, 4rem);
+      text-align: center;
+    }
+    .e404__mark { width: clamp(56px, 8vw, 80px); height: auto; color: #1E1E1E; margin: 0 auto 2rem; }
+    .e404__code { font-size: 0.88rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(30,30,30,0.70); }
+    .e404__title {
+      margin-top: 1rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 400;
+      letter-spacing: -0.025em;
+      line-height: 1.08;
+    }
+    .e404__text { margin-top: 1.2rem; max-width: 34ch; margin-inline: auto; color: rgba(30,30,30,0.70); }
+    .e404__home {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-top: 2.4rem;
+      padding: 0.95rem 1.4rem;
+      border: 1px solid #1E1E1E;
+      font-size: 0.96rem;
+      color: #1E1E1E;
+      text-decoration: none;
+      transition: background-color 0.35s cubic-bezier(0.22,1,0.36,1), color 0.35s cubic-bezier(0.22,1,0.36,1);
+    }
+    .e404__home:hover { background: #1E1E1E; color: #DDDAD5; }
+    .e404__home svg { width: 18px; height: 18px; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
+    .e404__home:hover svg { transform: translateX(4px); }
+    .e404__home:focus-visible { outline: 2px solid #1E1E1E; outline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="e404">
+    <svg class="e404__mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g fill="currentColor">
+        <rect x="12" y="8"  width="8"  height="48"/>
+        <rect x="20" y="8"  width="18" height="9"/>
+        <rect x="20" y="26" width="18" height="9"/>
+        <rect x="20" y="44" width="18" height="9"/>
+        <rect x="44" y="8"  width="8"  height="48"/>
+        <rect x="28" y="17" width="16" height="9"/>
+        <rect x="28" y="35" width="16" height="9"/>
+      </g>
+    </svg>
+    <p class="e404__code">Błąd 404</p>
+    <h1 class="e404__title">Tej strony nie ma<br>w naszej pracowni</h1>
+    <p class="e404__text">Strona, której szukasz, mogła zostać przeniesiona albo nigdy nie istniała. Wróćmy do początku.</p>
+    <a class="e404__home" href="./">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 12H4M10 5l-7 7 7 7" stroke="currentColor" stroke-width="1.4"/></svg>
+      Strona główna
+    </a>
+  </main>
+</body>
+</html>
