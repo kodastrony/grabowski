@@ -1188,6 +1188,22 @@ function mountView(route) {
   currentRoute = route;
 }
 
+/* Maska SplitText (`mask: 'lines'` → wrapper z overflow:clip) jest wysoka na
+   ciasny line-height, więc ucinała descendery (y, g, p, przecinek) przez CAŁY
+   wjazd. Poszerzamy strefę cięcia w dół o 0.22em (padding wlicza się do obszaru
+   clip), a równy mu ujemny margines zachowuje odstęp między liniami i pozycję
+   tytułu. Descendery są więc w całości od pierwszej klatki — bez przeskoku.
+   onSplit wywołuje się przy każdym (re)splitcie, więc działa też z autoSplit.
+   Jednostka em skaluje się z fontem → identycznie na każdym urządzeniu. */
+function roomForDescenders(self) {
+  self.lines.forEach((line) => {
+    const mask = line.parentElement;
+    if (!mask) return;
+    mask.style.paddingBottom = '0.22em';
+    mask.style.marginBottom = '-0.22em';
+  });
+}
+
 /* wejściowa animacja widoku (po zdjęciu kurtyny / intra) */
 function enterView(route) {
   if (instantBoot) {
@@ -1201,7 +1217,9 @@ function enterView(route) {
     const heroTitle = homeView.querySelector('[data-hero-title]');
     gsap.set(heroTitle, { visibility: 'visible' });
     if (heroSplit) heroSplit.revert();
-    heroSplit = new SplitText(heroTitle, { type: 'lines', mask: 'lines', autoSplit: true });
+    heroSplit = new SplitText(heroTitle, {
+      type: 'lines', mask: 'lines', autoSplit: true, onSplit: roomForDescenders,
+    });
     tl.from(heroSplit.lines, { yPercent: 112, duration: 1.15, stagger: 0.12, ease: 'power4.out' }, 0.05);
     tl.from(homeView.querySelector('[data-slider]'), { y: 56, opacity: 0, duration: 1.1, ease: 'power3.out' }, 0.4);
   } else if (route.type === 'project') {
@@ -1210,7 +1228,9 @@ function enterView(route) {
     }, 0.1);
   } else {
     const title = pageView.querySelector('[data-page-title]');
-    pageTitleSplit = new SplitText(title, { type: 'lines', mask: 'lines', autoSplit: true });
+    pageTitleSplit = new SplitText(title, {
+      type: 'lines', mask: 'lines', autoSplit: true, onSplit: roomForDescenders,
+    });
     tl.from(pageTitleSplit.lines, { yPercent: 112, duration: 1.1, stagger: 0.1, ease: 'power4.out' }, 0.05);
     const gItems = pageView.querySelectorAll('[data-gallery-item]');
     if (gItems.length) {
