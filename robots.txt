@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kodastrony.github.io/grabowski/sitemap.xml
+Sitemap: https://grabowski.kodastrony.pl/sitemap.xml
