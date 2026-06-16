@@ -329,7 +329,9 @@ html:not(.js) .intro { display: none; }
   transform: scale(0.6);
 }
 
-.cursor svg { width: 22px; height: 22px; }
+.cursor svg { width: 22px; height: 22px; transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1); }
+/* lewa połowa strefy → strzałka obraca się w lewo (nawigacja wstecz) */
+.cursor.is-left svg { transform: scaleX(-1); }
 
 @media (hover: none), (pointer: coarse) {
   .cursor { display: none; }

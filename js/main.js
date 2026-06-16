@@ -444,7 +444,13 @@ if (cursor && finePointer && !prefersReduced) {
   refreshCursorZone = () => {
     if (lastX < 0 || menuOpen) { setVisible(false); return; }
     const el = document.elementFromPoint(lastX, lastY);
-    setVisible(Boolean(el && el.closest && el.closest('[data-cursor-zone]')));
+    const zone = el && el.closest ? el.closest('[data-cursor-zone]') : null;
+    setVisible(Boolean(zone));
+    // lewa połowa strefy → kursor wskazuje wstecz, prawa → naprzód
+    if (zone) {
+      const rect = zone.getBoundingClientRect();
+      cursor.classList.toggle('is-left', lastX < rect.left + rect.width / 2);
+    }
   };
 
   window.addEventListener('pointermove', (e) => {
@@ -673,7 +679,11 @@ function initHomeSlider(root) {
   const sig = { signal: ac.signal };
   nextBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(1); }, sig);
   if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); go(-1); }, sig);
-  stage.addEventListener('click', () => go(1), sig);
+  // klik w lewą połowę sceny cofa, w prawą — przewija naprzód
+  stage.addEventListener('click', (e) => {
+    const rect = stage.getBoundingClientRect();
+    go(e.clientX < rect.left + rect.width / 2 ? -1 : 1);
+  }, sig);
   stage.addEventListener('pointerenter', () => { hovering = true; syncProgress(); }, sig);
   stage.addEventListener('pointerleave', () => { hovering = false; syncProgress(); }, sig);
 
