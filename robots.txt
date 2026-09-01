@@ -1,4 +1,56 @@
+# Grabowski — DEMO PORTFOLIO KODA
+#
+# 2026-09-01: strona ma NIE wchodzić do wyszukiwarek. Ruch ma trafiać na
+# kodastrony.pl, a nie na demo koncepcyjne (fikcyjna marka) — demo istnieje
+# wyłącznie jako podgląd „zobacz na żywo" z podstrony /realizacje/.
+#
+# Deindeksację robi `<meta name="robots" content="noindex, nofollow">`.
+# UWAGA: Googlebot MUSI mieć wstęp, żeby ten noindex zobaczyć. Zablokowanie go
+# tutaj (Disallow: /) zamroziłoby stare wyniki w indeksie zamiast je usunąć.
+
 User-agent: *
 Allow: /
 
+# Silniki AI / trenowanie modeli — ich noindex nie dotyczy, więc odcinamy w robots.
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-User
+Disallow: /
+
+User-agent: Claude-SearchBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Perplexity-User
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+# Mapa zostaje celowo — przyspiesza ponowne odwiedziny Googlebota, a więc tempo
+# wypadania z indeksu. Do usunięcia po zakończonej deindeksacji.
 Sitemap: https://grabowski.kodastrony.pl/sitemap.xml
